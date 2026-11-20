@@ -23,8 +23,15 @@ SWIFT_FLAGS=(
 # macros without providing the plugin, so prefer the 26.5 SDK when it exists
 # (override with GTRBOARD_SDK=/path/to/MacOSX.sdk).
 SDK="${GTRBOARD_SDK:-}"
-if [[ -z "$SDK" && -d "/Library/Developer/CommandLineTools/SDKs/MacOSX26.5.sdk" ]]; then
-  SDK="/Library/Developer/CommandLineTools/SDKs/MacOSX26.5.sdk"
+if [[ -z "$SDK" ]]; then
+  # Only use the CLT fallback when Command Line Tools are the selected
+  # developer directory. With full Xcode selected (including GitHub's macOS
+  # runners) use Xcode's own SDK and toolchain, which ship the macro plugin.
+  DEVELOPER_PATH="$(xcode-select -p 2>/dev/null || true)"
+  if [[ "$DEVELOPER_PATH" == *"/CommandLineTools"* &&
+        -d "/Library/Developer/CommandLineTools/SDKs/MacOSX26.5.sdk" ]]; then
+    SDK="/Library/Developer/CommandLineTools/SDKs/MacOSX26.5.sdk"
+  fi
 fi
 SDK_FLAGS=()
 if [[ -n "$SDK" ]]; then

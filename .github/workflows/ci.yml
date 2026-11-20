@@ -32,7 +32,15 @@ jobs:
         run: ./test.sh
 
       - name: Build app bundle
-        run: ./build.sh
+        run: |
+          set +e
+          ./build.sh > build.log 2>&1
+          status=$?
+          cat build.log
+          if [ "$status" -ne 0 ]; then
+            echo "::error title=build.sh failed::$(tail -n 1 build.log)"
+          fi
+          exit "$status"
 
       - name: Package app
         run: ditto -c -k --keepParent dist/GtrBoard.app dist/GtrBoard.app.zip
