@@ -33,13 +33,14 @@ if [[ -z "$SDK" ]]; then
     SDK="/Library/Developer/CommandLineTools/SDKs/MacOSX26.5.sdk"
   fi
 fi
-SDK_FLAGS=()
+BUILD_ARGS=(-c release --product GtrBoard)
 if [[ -n "$SDK" ]]; then
-  SDK_FLAGS=(--sdk "$SDK")
+  BUILD_ARGS+=(--sdk "$SDK")
 fi
+BUILD_ARGS+=("${SWIFT_FLAGS[@]}")
 
 echo "▸ Building GtrBoard (release)…"
-swift build -c release --product GtrBoard "${SDK_FLAGS[@]}" "${SWIFT_FLAGS[@]}"
+swift build "${BUILD_ARGS[@]}"
 
 APP="$ROOT/dist/GtrBoard.app"
 rm -rf "$APP"
