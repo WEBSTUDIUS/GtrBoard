@@ -686,6 +686,22 @@ do {
     }
 
 
+    // Ready-to-import presets in Presets/ must stay valid.
+    do {
+        let files = (try? FileManager.default.contentsOfDirectory(atPath: "Presets"))?
+            .filter { $0.hasSuffix(".json") || $0.hasSuffix(".gtrpreset") } ?? []
+        var decoded = 0
+        for file in files {
+            let url = URL(fileURLWithPath: "Presets").appendingPathComponent(file)
+            if let data = try? Data(contentsOf: url),
+               (try? PresetDocument.decode(data)) != nil {
+                decoded += 1
+            }
+        }
+        expect(!files.isEmpty && decoded == files.count, "Presets/ examples decode")
+    }
+
+    // Silence through the default board — any energy here is self-oscillation.
 // MARK: - Diagnostic dumps
 
 if ProcessInfo.processInfo.environment["GTRBOARD_DUMP"] == "1" {

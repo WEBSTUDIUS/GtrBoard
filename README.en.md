@@ -14,7 +14,7 @@ preset crossfades and a menu-bar controller.
 
 [![macOS](https://img.shields.io/badge/macOS-14%2B-black?logo=apple&logoColor=white)](#build)
 [![Swift](https://img.shields.io/badge/Swift-6-F05138?logo=swift&logoColor=white)](#build)
-[![Tests](https://img.shields.io/badge/tests-700%20passing-2ea043)](#tests)
+[![Tests](https://img.shields.io/badge/tests-701%20passing-2ea043)](#tests)
 [![CI](https://github.com/WEBSTUDIUS/GtrBoard/actions/workflows/ci.yml/badge.svg)](https://github.com/WEBSTUDIUS/GtrBoard/actions/workflows/ci.yml)
 [![License](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
 [![Version](https://img.shields.io/badge/version-0.3.0-8b5cf6)](CHANGELOG.md)
@@ -95,7 +95,7 @@ Other commands:
 ```bash
 ./run.sh       # build and open
 ./install.sh   # install to /Applications (~/Applications fallback)
-./test.sh      # DSP/preset self-tests (700 checks)
+./test.sh      # DSP/preset self-tests (701 checks)
 ```
 
 ### 2. Plug in a guitar
@@ -209,6 +209,14 @@ Factory rigs are **loudness-calibrated**: RMS spread is about 1 dB, so
 “Studio Clean → Enter Sandman” does not jump. Calibration lives in
 `outputTrim` — the **PRESET** slider in the footer. Double-click its value for
 0 dB.
+
+### Presets in this repository
+
+The [`Presets/`](Presets/) folder contains ready-to-import user presets — use
+**⌘O** or **Browse Presets → Import**. The first one:
+[`Enter Sandman GPT.json`](Presets/Enter%20Sandman%20GPT.json) — an AI-generated
+high-gain Metallica-style rhythm: gate, tight overdrive boost, high-gain amp,
+closed 4×12 and a scooped EQ with no reverb.
 
 ### Save and share
 
@@ -463,7 +471,7 @@ Covered:
 - throughput: a full high-gain board renders ~75× faster than real time on
   Apple Silicon.
 
-Current run: **700 checks**, all passing. GitHub Actions runs the same suite on
+Current run: **701 checks**, all passing. GitHub Actions runs the same suite on
 every push and pull request and uploads the built `.app` as an artifact.
 
 ## <a id="trouble"></a>Troubleshooting

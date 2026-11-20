@@ -12,7 +12,7 @@ A/B-банки, кроссфейд между пресетами и меню-б�
 
 [![macOS](https://img.shields.io/badge/macOS-14%2B-black?logo=apple&logoColor=white)](#build)
 [![Swift](https://img.shields.io/badge/Swift-6-F05138?logo=swift&logoColor=white)](#build)
-[![Tests](https://img.shields.io/badge/tests-700%20passing-2ea043)](#tests)
+[![Tests](https://img.shields.io/badge/tests-701%20passing-2ea043)](#tests)
 [![License](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
 [![Version](https://img.shields.io/badge/version-0.3.0-8b5cf6)](CHANGELOG.md)
 [![CI](https://github.com/WEBSTUDIUS/GtrBoard/actions/workflows/ci.yml/badge.svg)](https://github.com/WEBSTUDIUS/GtrBoard/actions/workflows/ci.yml)
@@ -97,7 +97,7 @@ Gatekeeper блокирует копию в `/Applications`, откройте е
 ```bash
 ./run.sh       # собрать и открыть
 ./install.sh   # установить в /Applications (~/Applications как fallback)
-./test.sh      # DSP/пресет self-tests (700 проверок)
+./test.sh      # DSP/пресет self-tests (701 проверка)
 ```
 
 ### 2. Подключите гитару
@@ -209,6 +209,14 @@ master volume, output trim, limiter и bypass.
 Заводские пресеты **откалиброваны по громкости**: разброс RMS около 1 дБ,
 поэтому «Studio Clean → Enter Sandman» не выстреливает. Калибровка живёт в
 `outputTrim` — ползунок **PRESET** в футере. Двойной клик по значению — 0 дБ.
+
+### Пресеты в репозитории
+
+В папке [`Presets/`](Presets/) лежат готовые пользовательские пресеты — их можно
+импортировать через **⌘O** или **Browse Presets → Import**. Первый:
+[`Enter Sandman GPT.json`](Presets/Enter%20Sandman%20GPT.json) — AI-пресет
+высокогайнового ритма в духе Metallica: гейт, тугой overdrive-буст, высокий
+gain, закрытый 4×12 и scooped-EQ без реверба.
 
 ### Сохранение и обмен
 
@@ -466,7 +474,7 @@ master, limiter). При смене пресета вторая цепь гот�
 - пропускная способность: полный high-gain борд рендерится в ~75 раз быстрее
   реального времени на Apple Silicon.
 
-Текущий прогон: **700 проверок**, все проходят.
+Текущий прогон: **701 проверка**, все проходят.
 
 ## <a id="trouble"></a>Если что-то не так
 

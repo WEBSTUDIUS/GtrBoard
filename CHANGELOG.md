@@ -9,7 +9,10 @@
   при запуске выбор переводится в **No Input**, чтобы не было петли.
 - Новый README, руководство `docs/AI_PRESETS.md` и готовый AI-пример
   `docs/examples/ai-british-crunch.gtrpreset`; пример проверяется self-test'ом.
-- Всего проверок: 700.
+- Добавлена папка [`Presets/`](Presets/) с готовыми пользовательскими
+  пресетами; первый — `Enter Sandman GPT.json` (AI, high-gain rhythm).
+  Все файлы из папки проверяются self-test'ом.
+- Всего проверок: 701.
 
 ## 0.2.9 — 2026-11-20
 
