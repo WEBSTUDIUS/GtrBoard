@@ -1,5 +1,7 @@
 # Пресеты GtrBoard с помощью ИИ
 
+<p><a href="AI_PRESETS.en.md">🇬🇧 English</a> · <b>Русский</b></p>
+
 GtrBoard хранит пресеты в открытом JSON. Это значит, что пресет можно
 **сгенерировать в любом чате с LLM** — ChatGPT, Claude, DeepSeek, Gemini — а
 затем импортировать в приложение. Сам GtrBoard никуда не ходит в интернет и не

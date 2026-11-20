@@ -15,6 +15,9 @@ A/B-банки, кроссфейд между пресетами и меню-б�
 [![Tests](https://img.shields.io/badge/tests-700%20passing-2ea043)](#tests)
 [![License](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
 [![Version](https://img.shields.io/badge/version-0.3.0-8b5cf6)](CHANGELOG.md)
+[![CI](https://github.com/WEBSTUDIUS/GtrBoard/actions/workflows/ci.yml/badge.svg)](https://github.com/WEBSTUDIUS/GtrBoard/actions/workflows/ci.yml)
+
+<p><b>Русский</b> · <a href="README.en.md">🇬🇧 English</a></p>
 
 [Быстрый старт](#quickstart) · [Пресеты с ИИ](#ai-presets) · [Запись](#record) ·
 [Сборка](#build) · [Архитектура](#architecture)
@@ -356,7 +359,8 @@ master volume, output trim, limiter и bypass.
 - **Не вставляйте секреты.** Генерация идёт во внешнем сервисе.
 
 📚 **Полный справочник параметров, диапазоны, индексы переключателей и готовый
-пример** — в [`docs/AI_PRESETS.md`](docs/AI_PRESETS.md). Пример файла:
+пример** — в [`docs/AI_PRESETS.md`](docs/AI_PRESETS.md)
+([English version](docs/AI_PRESETS.en.md)). Пример файла:
 [`docs/examples/ai-british-crunch.gtrpreset`](docs/examples/ai-british-crunch.gtrpreset).
 
 ## <a id="record"></a>Запись и DAW
