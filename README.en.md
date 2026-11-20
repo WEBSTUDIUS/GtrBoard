@@ -214,9 +214,13 @@ Factory rigs are **loudness-calibrated**: RMS spread is about 1 dB, so
 
 The [`Presets/`](Presets/) folder contains ready-to-import user presets — use
 **⌘O** or **Browse Presets → Import**. The first one:
-[`Enter Sandman GPT.json`](Presets/Enter%20Sandman%20GPT.json) — an AI-generated
-high-gain Metallica-style rhythm: gate, tight overdrive boost, high-gain amp,
-closed 4×12 and a scooped EQ with no reverb.
+[`Enter Sandman GPT.json`](Presets/Enter%20Sandman%20GPT.json) — a Metallica
+*Black Album*-style rhythm: gate, tight overdrive boost, high-gain amp, closed
+4×12, scooped EQ and a small room. There are also two Linkin Park presets:
+[`Hybrid Theory`](Presets/Linkin%20Park%20-%20Hybrid%20Theory.json) (drop D,
+tight high gain, more upper mids, dry) and
+[`Faint / Given Up`](Presets/Linkin%20Park%20-%20Faint.json) (more aggressive,
+faster gate, brighter presence).
 
 ### Save and share
 

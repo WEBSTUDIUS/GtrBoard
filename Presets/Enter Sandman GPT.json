@@ -2,21 +2,18 @@
   "format": "com.andreyilin.gtrboard.preset",
   "version": 1,
   "preset": {
-    "name": "Enter Sandman — Heavy Rhythm",
-    "author": "AI + GPT-6",
-    "gear": "Metallica Black Album-inspired rhythm tone: Mesa/Boogie Mark-series high-gain amp, closed-back 4x12 cabinet with Celestion Vintage 30-style speakers, bridge humbucker, standard E tuning.",
+    "name": "Enter Sandman — Black Album Rhythm",
+    "author": "GtrBoard tone lab",
+    "gear": "Mesa Mark/Recto high gain · TS-style boost · closed 4x12",
     "tags": [
-      "Metallica",
-      "Enter Sandman",
-      "Black Album",
-      "Thrash Metal",
-      "Heavy Metal",
-      "Rhythm Guitar",
-      "High Gain",
-      "Mesa Boogie",
-      "Palm Mute"
+      "metallica",
+      "enter sandman",
+      "black album",
+      "metal",
+      "high gain",
+      "rhythm"
     ],
-    "notes": "Inspired by the heavy rhythm guitar sound of Metallica's Enter Sandman (1991). Tight and punchy low end, aggressive upper mids, controlled gain and crisp pick attack. Use a bridge humbucker, standard E tuning and firm palm muting. The overdrive tightens the amp response without adding excessive distortion. The graphic EQ provides a scooped-metal character while retaining enough midrange for note definition. Reverb is intentionally disabled for dry, precise rhythm tracking. Designed as a starting point rather than an exact reproduction of the original studio recording. Parameters normalized to the GtrBoard preset schema (voicing moved into the amp params).",
+    "notes": "Tight, scooped Black Album rhythm: TS-style overdrive tightens the low end, high-gain amp with a small room for the record’s ambience. Bridge humbucker, standard E, firm palm muting. Approximation on GtrBoard’s DSP, not an amp capture.",
     "settings": {
       "units": [
         {
@@ -24,7 +21,7 @@
           "enabled": true,
           "params": {
             "threshold": -50,
-            "decay": 140,
+            "decay": 120,
             "range": 65
           }
         },
@@ -40,10 +37,10 @@
           "kind": "overdrive",
           "enabled": true,
           "params": {
-            "drive": 10,
-            "tone": 0.5,
-            "level": -6,
-            "mid": 0.7
+            "drive": 12,
+            "tone": 0.45,
+            "level": -5,
+            "mid": 0.75
           }
         },
         {
@@ -58,10 +55,10 @@
           "kind": "amp",
           "enabled": true,
           "params": {
-            "gain": 27,
+            "gain": 28,
             "bass": 1.5,
             "mid": -0.5,
-            "treble": 1.5,
+            "treble": 2,
             "presence": 5,
             "master": -10,
             "voicing": 3
@@ -72,7 +69,7 @@
           "enabled": true,
           "params": {
             "lowCut": 90,
-            "highCut": 4800,
+            "highCut": 5000,
             "resonance": 5
           }
         },
@@ -98,26 +95,33 @@
         },
         {
           "kind": "reverb",
-          "enabled": false
+          "enabled": true,
+          "params": {
+            "size": 0.25,
+            "damping": 0.6,
+            "mix": 0.05,
+            "predelay": 8,
+            "mode": 0
+          }
         }
       ],
       "graphicEQ": {
         "enabled": true,
         "gains": [
-          -5.0,
-          -2.0,
-          2.5,
-          3.5,
-          -1.5,
-          -4.5,
-          -2.0,
-          2.5,
-          1.0,
-          -5.0
+          -5,
+          -2,
+          3,
+          4,
+          -1,
+          -4,
+          -2,
+          2,
+          1,
+          -5
         ]
       },
       "masterVolume": -9,
-      "outputTrim": -2,
+      "outputTrim": 6.5,
       "limiter": true,
       "bypass": false
     }

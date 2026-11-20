@@ -10,8 +10,9 @@
 - Новый README, руководство `docs/AI_PRESETS.md` и готовый AI-пример
   `docs/examples/ai-british-crunch.gtrpreset`; пример проверяется self-test'ом.
 - Добавлена папка [`Presets/`](Presets/) с готовыми пользовательскими
-  пресетами; первый — `Enter Sandman GPT.json` (AI, high-gain rhythm).
-  Все файлы из папки проверяются self-test'ом.
+  пресетами: `Enter Sandman GPT.json` (Metallica Black Album rhythm) и два
+  Linkin Park — `Hybrid Theory` и `Faint / Given Up`. Все файлы из папки
+  проверяются self-test'ом.
 - Всего проверок: 701.
 
 ## 0.2.9 — 2026-11-20

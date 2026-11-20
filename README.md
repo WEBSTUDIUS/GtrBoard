@@ -214,9 +214,13 @@ master volume, output trim, limiter и bypass.
 
 В папке [`Presets/`](Presets/) лежат готовые пользовательские пресеты — их можно
 импортировать через **⌘O** или **Browse Presets → Import**. Первый:
-[`Enter Sandman GPT.json`](Presets/Enter%20Sandman%20GPT.json) — AI-пресет
-высокогайнового ритма в духе Metallica: гейт, тугой overdrive-буст, высокий
-gain, закрытый 4×12 и scooped-EQ без реверба.
+[`Enter Sandman GPT.json`](Presets/Enter%20Sandman%20GPT.json) — ритм в духе
+Metallica *Black Album*: гейт, тугой overdrive-буст, high gain, закрытый 4×12,
+scooped-EQ и маленький рум. Рядом лежат два Linkin Park:
+[`Hybrid Theory`](Presets/Linkin%20Park%20-%20Hybrid%20Theory.json) (drop D,
+плотный high gain, больше верхней середины, сухо) и
+[`Faint / Given Up`](Presets/Linkin%20Park%20-%20Faint.json) (злее, быстрее
+гейт, ярче presence).
 
 ### Сохранение и обмен
 
