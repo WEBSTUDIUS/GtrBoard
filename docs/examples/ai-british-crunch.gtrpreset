@@ -1,0 +1,41 @@
+{
+  "format": "com.andreyilin.gtrboard.preset",
+  "version": 1,
+  "preset": {
+    "name": "AI British Crunch",
+    "author": "GtrBoard AI",
+    "gear": "Plexi-style crunch → 4x12 → room",
+    "tags": ["ai", "crunch", "classic-rock"],
+    "notes": "Example generated from a text prompt, then checked by ear. Import it and tweak the PRESET level.",
+    "settings": {
+      "units": [
+        { "kind": "gate", "enabled": false },
+        { "kind": "compressor", "enabled": false },
+        { "kind": "boost", "enabled": true,
+          "params": { "gain": 7, "tone": 1.5, "tight": 90 } },
+        { "kind": "overdrive", "enabled": false },
+        { "kind": "distortion", "enabled": false },
+        { "kind": "fuzz", "enabled": false },
+        { "kind": "amp", "enabled": true,
+          "params": { "gain": 24, "bass": 1, "mid": 2.5, "treble": 1, "presence": 4, "master": -8, "voicing": 1 } },
+        { "kind": "cabinet", "enabled": true,
+          "params": { "lowCut": 95, "highCut": 5200, "resonance": 5 } },
+        { "kind": "chorus", "enabled": false },
+        { "kind": "flanger", "enabled": false },
+        { "kind": "phaser", "enabled": false },
+        { "kind": "tremolo", "enabled": false },
+        { "kind": "delay", "enabled": false },
+        { "kind": "reverb", "enabled": true,
+          "params": { "size": 0.45, "damping": 0.5, "mix": 0.15, "predelay": 22, "mode": 0 } }
+      ],
+      "graphicEQ": {
+        "enabled": true,
+        "gains": [0, 0, 1, 0, -1, 0, 1, 0, 0, 0]
+      },
+      "masterVolume": -6,
+      "outputTrim": 0,
+      "limiter": true,
+      "bypass": false
+    }
+  }
+}
