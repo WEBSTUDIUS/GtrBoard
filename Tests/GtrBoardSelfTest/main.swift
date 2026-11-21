@@ -477,6 +477,31 @@ do {
     }
 }
 
+print("▸ EQ across preset switch")
+do {
+    var flat = bareBoard(master: 0)
+    flat.limiter = false
+    flat.graphicEQ = GraphicEQSettings(enabled: true, gains: Array(repeating: 0, count: 10))
+    var boosted = flat
+    boosted.graphicEQ.gains[5] = 12 // 1 kHz band
+
+    let processor = BoardProcessor()
+    processor.prepare(sampleRate: 48_000, maxFrames: 256)
+    processor.update(settings: flat)
+    let input = sine(frequency: 1_000, amplitude: 0.1, seconds: 0.4)
+    let switched = renderWithPresetSwitch(
+        processor,
+        input: input,
+        switchFrame: Int(48_000 * 0.1),
+        second: boosted
+    )
+    let settled = Array(switched[Int(48_000 * 0.25)..<Int(48_000 * 0.40)])
+    let reference = Array(input[Int(48_000 * 0.25)..<Int(48_000 * 0.40)])
+    let gain = rms(settled) / max(rms(reference), 1e-9)
+    print(String(format: "  • 1 kHz band after switch: gain %.2fx (expect ~4)", gain))
+    expect(gain > 2.5, "graphic EQ survives a preset crossfade")
+}
+
 print("▸ Dynamics")
 do {
     var settings = bareBoard()

@@ -258,8 +258,11 @@ public final class BoardProcessor: @unchecked Sendable {
             os_unfair_lock_unlock(lock)
 
             let started = mach_absolute_time()
-            target.apply()
+            // Reset state first, then apply the new snapshot. The other order
+            // wipes the graphic EQ targets (reset() puts them back to flat),
+            // so a preset's EQ disappeared after the crossfade.
             target.reset()
+            target.apply()
             target.masterGain.snap()
             target.bypassMix.snap()
             lastTransitionResetMicros = Double(mach_absolute_time() - started)

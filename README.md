@@ -12,9 +12,9 @@ A/B-банки, кроссфейд между пресетами и меню-б�
 
 [![macOS](https://img.shields.io/badge/macOS-14%2B-black?logo=apple&logoColor=white)](#build)
 [![Swift](https://img.shields.io/badge/Swift-6-F05138?logo=swift&logoColor=white)](#build)
-[![Tests](https://img.shields.io/badge/tests-701%20passing-2ea043)](#tests)
+[![Tests](https://img.shields.io/badge/tests-702%20passing-2ea043)](#tests)
 [![License](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
-[![Version](https://img.shields.io/badge/version-0.3.0-8b5cf6)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-0.3.1-8b5cf6)](CHANGELOG.md)
 [![CI](https://github.com/WEBSTUDIUS/GtrBoard/actions/workflows/ci.yml/badge.svg)](https://github.com/WEBSTUDIUS/GtrBoard/actions/workflows/ci.yml)
 
 <p><b>Русский</b> · <a href="README.en.md">🇬🇧 English</a></p>
@@ -97,7 +97,7 @@ Gatekeeper блокирует копию в `/Applications`, откройте е
 ```bash
 ./run.sh       # собрать и открыть
 ./install.sh   # установить в /Applications (~/Applications как fallback)
-./test.sh      # DSP/пресет self-tests (701 проверка)
+./test.sh      # DSP/пресет self-tests (702 проверки)
 ```
 
 ### 2. Подключите гитару
@@ -478,7 +478,7 @@ master, limiter). При смене пресета вторая цепь гот�
 - пропускная способность: полный high-gain борд рендерится в ~75 раз быстрее
   реального времени на Apple Silicon.
 
-Текущий прогон: **701 проверка**, все проходят.
+Текущий прогон: **702 проверки**, все проходят.
 
 ## <a id="trouble"></a>Если что-то не так
 

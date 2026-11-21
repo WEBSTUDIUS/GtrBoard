@@ -14,10 +14,10 @@ preset crossfades and a menu-bar controller.
 
 [![macOS](https://img.shields.io/badge/macOS-14%2B-black?logo=apple&logoColor=white)](#build)
 [![Swift](https://img.shields.io/badge/Swift-6-F05138?logo=swift&logoColor=white)](#build)
-[![Tests](https://img.shields.io/badge/tests-701%20passing-2ea043)](#tests)
+[![Tests](https://img.shields.io/badge/tests-702%20passing-2ea043)](#tests)
 [![CI](https://github.com/WEBSTUDIUS/GtrBoard/actions/workflows/ci.yml/badge.svg)](https://github.com/WEBSTUDIUS/GtrBoard/actions/workflows/ci.yml)
 [![License](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
-[![Version](https://img.shields.io/badge/version-0.3.0-8b5cf6)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-0.3.1-8b5cf6)](CHANGELOG.md)
 
 [Quick start](#quickstart) · [AI presets](#ai-presets) · [Recording](#record) ·
 [Build](#build) · [Architecture](#architecture)
@@ -95,7 +95,7 @@ Other commands:
 ```bash
 ./run.sh       # build and open
 ./install.sh   # install to /Applications (~/Applications fallback)
-./test.sh      # DSP/preset self-tests (701 checks)
+./test.sh      # DSP/preset self-tests (702 checks)
 ```
 
 ### 2. Plug in a guitar
@@ -475,7 +475,7 @@ Covered:
 - throughput: a full high-gain board renders ~75× faster than real time on
   Apple Silicon.
 
-Current run: **701 checks**, all passing. GitHub Actions runs the same suite on
+Current run: **702 checks**, all passing. GitHub Actions runs the same suite on
 every push and pull request and uploads the built `.app` as an artifact.
 
 ## <a id="trouble"></a>Troubleshooting
