@@ -519,7 +519,7 @@ brew install xcodegen   # once
 The script builds `GtrBoard Plugin Host.app`, installs it into `/Applications`,
 registers the AUv3 and runs `auval`. Then, in the DAW:
 
-**Audio FX → Audio Units → Andrey Ilin → GtrBoard**
+**Audio FX → Audio Units → Awesonic → GtrBoard**
 
 The plug-in window is the full board: 15 pedals, graphic EQ, master, limiter,
 bypass and feedback guard. Every knob is exposed as a host parameter for

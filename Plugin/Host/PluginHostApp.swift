@@ -6,7 +6,7 @@ import SwiftUI
 @main
 struct GtrBoardPluginHostApp: App {
     var body: some Scene {
-        WindowGroup("GtrBoard Plugin Host") {
+        WindowGroup("Awesonic GtrBoard") {
             HostView()
                 .frame(minWidth: 520, minHeight: 360)
         }
@@ -17,7 +17,7 @@ struct GtrBoardPluginHostApp: App {
 struct HostView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
-            Text("GtrBoard Audio Unit")
+            Text("Awesonic GtrBoard")
                 .font(.system(size: 24, weight: .bold))
             Text("The GtrBoard AUv3 effect is installed with this app.\nLaunch it once, then restart Logic or GarageBand and look for GtrBoard under Audio Units → Effects.")
                 .font(.system(size: 13))

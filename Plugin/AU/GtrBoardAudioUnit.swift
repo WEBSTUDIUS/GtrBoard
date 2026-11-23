@@ -517,7 +517,7 @@ public final class GtrBoardAudioUnit: AUAudioUnit, @unchecked Sendable {
             // the component identity before they accept the state blob.
             state["type"] = NSNumber(value: Self.fourCC("aufx"))
             state["subtype"] = NSNumber(value: Self.fourCC("GtrB"))
-            state["manufacturer"] = NSNumber(value: Self.fourCC("GtrB"))
+            state["manufacturer"] = NSNumber(value: Self.fourCC("Awes"))
             state["version"] = 67072
             if let data = try? JSONEncoder().encode(boardSettings) {
                 state["board"] = data

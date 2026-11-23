@@ -27,6 +27,8 @@ LSREGISTER="/System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchS
 
 pkill -f "GtrBoard Plugin Host" 2>/dev/null || true
 sleep 1
+pluginkit -r "$DEST/Contents/PlugIns/GtrBoardAU.appex" 2>/dev/null || true
+"$LSREGISTER" -u "$DEST" 2>/dev/null || true
 rm -rf "$DEST"
 ditto "$APP" "$DEST"
 # Drop the build-product registration so only the installed copy is visible.
@@ -38,7 +40,7 @@ open "$DEST"
 sleep 3
 
 echo "▸ Validating GtrBoard AUv3…"
-auval -v aufx GtrB GtrB
+auval -v aufx GtrB Awes
 echo ""
 echo "Ready. Restart Logic/GarageBand, then add the plug-in on a track:"
-echo "  Audio FX → Audio Units → Andrey Ilin → GtrBoard"
+echo "  Audio FX → Audio Units → Awesonic → GtrBoard"

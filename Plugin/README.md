@@ -1,7 +1,7 @@
 # GtrBoard AUv3
 
 The DAW version of GtrBoard. It is an **Audio Unit v3 effect** (`aufx`),
-manufacturer `Andrey Ilin`, name `GtrBoard`, built from the same `BoardCore`
+manufacturer `Awesonic` (component code `Awes`), name `GtrBoard`, built from the same `BoardCore`
 engine as the standalone app.
 
 ## Build and install
@@ -23,7 +23,7 @@ registers the extension and runs `auval`.
 1. Run `./plugin-build.sh` once (it also launches the host).
 2. Quit and reopen Logic/GarageBand.
 3. Add the plug-in as an insert on the guitar track:
-   **Audio FX → Audio Units → Andrey Ilin → GtrBoard**.
+   **Audio FX → Audio Units → Awesonic → GtrBoard**.
 
 The plug-in window is the full pedalboard: 15 pedals, the graphic EQ, master,
 limiter, bypass and the feedback guard. Every knob is also exposed as a host
