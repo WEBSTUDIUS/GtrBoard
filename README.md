@@ -93,7 +93,7 @@ GtrBoard — самостоятельное macOS-приложение для г
 
 ### 1. Соберите приложение
 
-> **Готовая сборка:** [GtrBoard 0.4.0 для macOS, zip](https://github.com/WEBSTUDIUS/GtrBoard/releases/latest).
+> **Готовая сборка:** [GtrBoard 0.4.0 для macOS (Apple Silicon), zip](https://github.com/WEBSTUDIUS/GtrBoard/releases/latest).
 > Распакуйте `.app` и откройте. Сборка ad-hoc; если Gatekeeper ругается —
 > правый клик → **Open**.
 

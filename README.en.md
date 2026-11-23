@@ -92,7 +92,7 @@ to play.
 
 ### 1. Build the app
 
-> **Prebuilt:** [GtrBoard 0.4.0 for macOS, zip](https://github.com/WEBSTUDIUS/GtrBoard/releases/latest).
+> **Prebuilt:** [GtrBoard 0.4.0 for macOS (Apple Silicon), zip](https://github.com/WEBSTUDIUS/GtrBoard/releases/latest).
 > Unzip the `.app` and open it. The build is ad-hoc signed; if Gatekeeper
 > complains, right-click → **Open**.
 

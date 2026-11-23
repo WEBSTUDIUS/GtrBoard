@@ -37,4 +37,4 @@
 3. Сборка ad-hoc signed: при первом запуске может понадобиться правый клик →
    **Open**.
 
-Требования: macOS 14+, Apple Silicon или Intel.
+Требования: macOS 14+, Apple Silicon (arm64).
