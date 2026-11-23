@@ -6,18 +6,18 @@
 
 **A guitar board for macOS — no plugin, no DAW, no waiting around.**
 
-Low-latency standalone chain: guitar → 14 pedals → amp → cabinet → 10-band EQ →
-recording. 24 factory rigs, user presets in open JSON, A/B banks, click-free
+Low-latency standalone chain: guitar → 15 pedals → amp → cabinet → IR cabinet →
+10-band EQ → recording. 30 factory rigs, user presets in open JSON, A/B banks, click-free
 preset crossfades and a menu-bar controller.
 
 <p><b>English</b> · <a href="README.md">🇷🇺 Русский</a></p>
 
 [![macOS](https://img.shields.io/badge/macOS-14%2B-black?logo=apple&logoColor=white)](#build)
 [![Swift](https://img.shields.io/badge/Swift-6-F05138?logo=swift&logoColor=white)](#build)
-[![Tests](https://img.shields.io/badge/tests-702%20passing-2ea043)](#tests)
+[![Tests](https://img.shields.io/badge/tests-906%20passing-2ea043)](#tests)
 [![CI](https://github.com/WEBSTUDIUS/GtrBoard/actions/workflows/ci.yml/badge.svg)](https://github.com/WEBSTUDIUS/GtrBoard/actions/workflows/ci.yml)
 [![License](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
-[![Version](https://img.shields.io/badge/version-0.3.1-8b5cf6)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-0.4.0-8b5cf6)](CHANGELOG.md)
 
 [Quick start](#quickstart) · [AI presets](#ai-presets) · [Recording](#record) ·
 [Build](#build) · [Architecture](#architecture)
@@ -39,6 +39,7 @@ preset crossfades and a menu-bar controller.
 - [Signal chain](#signal)
 - [Pedals](#pedals)
 - [Amp, cabinet and EQ](#amp-eq)
+- [Feedback guard](#feedback-guard)
 - [Presets](#presets)
 - [🤖 AI presets](#ai-presets)
 - [Recording and DAW](#record)
@@ -58,16 +59,27 @@ to play.
 
 - **Low latency.** Private aggregate device, HAL AudioUnit, 64–512 sample
   buffer. The current latency is shown in the UI.
-- **14 pedals in a real signal chain.** Reorder with the arrows; each pedal has
+- **15 pedals in a real signal chain.** Reorder with the arrows; each pedal has
   a footswitch and LED.
 - **Amp and cabinet.** Clean / Crunch / Lead / High Gain voicings, gain, tone
   stack, presence, master, sag; cabinet with low/high cut and resonance.
+- **IR cabinet.** Twelve built-in impulses (V30 4x12 SM57 and 57+121, Mesa OS,
+  Marshall G12T-75 and V30, Diezel, ENGL, Orange PPC, 5150, Fredman 57/57,
+  Djent tight, modern scoop) plus your own WAV: low/high cut, mix, level and
+  click-free model switching. IR presets: Enter Sandman IR,
+  Enter Sandman IR · EQ, Modern Metal, Djent, Swedish Chainsaw, Doom Wall.
+- **Feedback guard.** An automatic suppressor before the chain watches the
+  guitar feedback band **above 2 kHz** and 50/60 Hz mains hum, drops narrow
+  notches, and if the loop still holds it mutes the input and shows **MUTED**
+  (click the badge to re-arm). The **GUARD** switch lives in the footer next to
+  LIMIT and in the menu bar. Decaying notes and sustained chords are left
+  alone.
 - **Drives with 4× oversampling.** Overdrive, distortion and fuzz with distinct
   clipping character.
 - **Modulation and time.** Chorus, Flanger, Phaser, Tremolo, Delay (digital /
   analog / ping-pong), Reverb (room / hall / plate).
 - **10-band graphic EQ** at 31.5 Hz – 16 kHz, ±12 dB, at the end of the chain.
-- **Presets.** 24 factory rigs, user presets, search, JSON import/export, A/B
+- **Presets.** 30 factory rigs, user presets, search, JSON import/export, A/B
   banks and space-bar switching.
 - **Crossfade.** Two independent chains: the new preset is mixed in over 50 ms
   with no click, silence gap or level jump.
@@ -79,6 +91,10 @@ to play.
 ## <a id="quickstart"></a>Quick start
 
 ### 1. Build the app
+
+> **Prebuilt:** [GtrBoard 0.4.0 for macOS, zip](https://github.com/WEBSTUDIUS/GtrBoard/releases/latest).
+> Unzip the `.app` and open it. The build is ad-hoc signed; if Gatekeeper
+> complains, right-click → **Open**.
 
 ```bash
 git clone git@github.com:WEBSTUDIUS/GtrBoard.git
@@ -95,7 +111,7 @@ Other commands:
 ```bash
 ./run.sh       # build and open
 ./install.sh   # install to /Applications (~/Applications fallback)
-./test.sh      # DSP/preset self-tests (702 checks)
+./test.sh      # DSP/preset self-tests (906 checks)
 ```
 
 ### 2. Plug in a guitar
@@ -125,8 +141,9 @@ Speakers/Phones ←───┘
                     HAL AudioUnit (Float32, non-interleaved)
                                  │
                     BoardProcessor (audio thread)
-                      Gate → Compressor → Boost → Overdrive → Distortion
-                      → Fuzz → Amplifier → Cabinet → Chorus → Flanger
+                      Feedback / hum guard → Gate → Compressor → Boost
+                      → Overdrive → Distortion → Fuzz → Amplifier
+                      → Cabinet → IR Cabinet → Chorus → Flanger
                       → Phaser → Tremolo → Delay → Reverb
                       → 10-band Graphic EQ → Master → Look-ahead Limiter
                                  │
@@ -145,6 +162,7 @@ Speakers/Phones ←───┘
 | Fuzz | sustain, tone, level, bias | Big Muff: two stages, LP/HP blending |
 | Amplifier | gain, bass, mid, treble, presence, master, voicing | four-voice preamp + sag |
 | Cabinet | low cut, high cut, resonance | 4×12, 110 Hz resonance, 2.6 kHz presence |
+| IR Cabinet | model, mix, low cut, high cut, level | 12 built-in impulses plus a custom WAV, one block of latency |
 | Chorus | rate, depth, mix, width | two modulated voices, stereo LFO |
 | Flanger | rate, depth, feedback, mix, manual | short delay with resonant feedback |
 | Phaser | rate, depth, feedback, mix, stages | 4–12 all-pass stages |
@@ -160,21 +178,69 @@ its order; **Reset chain** restores the factory order.
 - **Amplifier** — Clean, Crunch, Lead and High Gain voicings. Asymmetric triode
   clipping, envelope-driven sag, passive tone stack.
 - **Cabinet** — 24 dB/oct low/high cut, 110 Hz resonance, 2.6 kHz presence.
+- **IR Cabinet** — a speaker impulse instead of the analogue cab. Twelve
+  synthesised cabinets voiced for metal; the pedal menu opens **Import WAV…**
+  for third-party IRs (PCM 8/16/24/32 and float, mono or stereo). Imports are
+  copied to `~/Library/Application Support/GtrBoard/IRs`, resampled to the
+  session rate, energy-normalised and trimmed to 170 ms. The IR pedal adds 64
+  samples of latency, reported in the latency readout. Import restarts audio for
+  half a second; switching built-in cabs is click-free (8 ms wet fade). Engaging
+  the IR pedal bypasses the analogue Cabinet automatically so the two do not
+  stack; both can still be enabled by hand.
 - **Graphic EQ** — 10 bands: 31.5, 63, 125, 250, 500, 1k, 2k, 4k, 8k, 16k Hz;
   ±12 dB, Q ≈ 1.41. Sits after the pedals, before master and limiter. **Flat**
   resets all bands; the **EQ** switch bypasses the section.
 - **Limiter** — transparent look-ahead ~1.5 ms, always in the path, so changing
   its state does not change latency or click.
 
+### Enter Sandman: two versions
+
+Both use the Mesa OS · SM57 IR with the same gate, boost, Recto-style high gain,
+90/7 kHz low/high cut and short room:
+
+| Preset | EQ | What it is for |
+|---|---|---|
+| **Enter Sandman IR** | graphic EQ flat | an honest IR rig with no extra colour |
+| **Enter Sandman IR · EQ** | Black Album curve | closer to the album rhythm tone; A/B it with the first one |
+
+The second version's curve: `31.5` 0, `63` +1, `125` +0.5, `250` −2.5,
+`500` −3, `1k` −1.5, `2k` +1.5, `4k` +2, `8k` −2.5, `16k` −5 dB. Low mids are
+scooped, presence is added and the fizz is shaved off. Both presets are
+level-calibrated, so switching does not jump in volume.
+
+This is an approximation, not a clone: the amp and cab are original models, the
+IR is synthesised, and the album tone is double-tracked and mixed. For a closer
+match, import your own Mesa IR through **Import WAV…**.
+
+## <a id="feedback-guard"></a>Feedback guard
+
+The guard sits **before** the pedals and works in two layers:
+
+- **Notches.** It drops narrow notches (Q 20) on growing peaks in the
+  **2–12 kHz** band, where a guitar rig actually howls. It also catches 50/60 Hz
+  mains hum and its harmonics with Q 40 notches for the dangling-jack case.
+- **MUTED.** If the dominant peak stays above 2 kHz, the spectrum is stationary
+  for about a second and the output is loud, the loop is not something notches
+  can break. The guard then mutes the input by −60 dB and shows **MUTED**.
+  Click the badge or change the preset to re-arm; the guard itself stays on.
+
+The **GUARD** switch is in the footer next to LIMIT and in the menu bar
+(`Enable/Disable Feedback Guard`). Decaying notes, sustained chords and a low B
+next to 50/60 Hz are left alone — each has its own test.
+
+> A built-in microphone into built-in speakers with high gain will still
+> feedback — physics wins. The guard stops it from howling forever, but playing
+> needs headphones or an audio interface.
+
 ## <a id="presets"></a>Presets
 
-A preset is a complete snapshot of the board: order and parameters of all 14
-pedals, EQ, master volume, output trim, limiter and bypass.
+A preset is a complete snapshot of the board: order and parameters of all 15
+pedals, EQ, master volume, output trim, limiter, feedback guard and bypass.
 
 ### Factory rigs
 
 <details>
-<summary><b>24 factory presets — expand</b></summary>
+<summary><b>30 factory presets — expand</b></summary>
 
 | Preset | Reference | Tags |
 |---|---|---|
@@ -190,6 +256,8 @@ pedals, EQ, master volume, output trim, limiter and bypass.
 | Smells Like Teen Spirit | DS-1 → clean Fender + chorus | alternative, grunge |
 | Master of Puppets | TS boost → Mark-style high gain, gate | metal, thrash |
 | Enter Sandman | Recto-style high gain, gate, room | metal |
+| Enter Sandman IR | the same Recto rig through the Mesa OS 4×12 IR | metal, metallica, ir |
+| Enter Sandman IR · EQ | the same IR rig plus the Black Album EQ curve | metal, metallica, ir, eq |
 | Killing in the Name | cranked JCM800, drop D | metal, rap-rock |
 | Seven Nation Army | Big Muff + dark clean | fuzz, riff |
 | Streets Have No Name | dotted-8 delay + chorus + clean | ambient, u2 |
@@ -202,6 +270,10 @@ pedals, EQ, master volume, output trim, limiter and bypass.
 | Ain't Talkin' 'Bout Love | Phase 90 → Plexi | crunch, van-halen |
 | Whole Lotta Love | Tone Bender → Vox-style edge | fuzz, zeppelin |
 | Modern Lead | high gain + digital delay + hall | lead, metal |
+| Modern Metal IR | boost → high gain → V30 4×12 IR (SM57) | metal, rhythm, ir |
+| Djent IR | tight boost → 5150-style head → Djent IR | metal, djent, ir |
+| Swedish Chainsaw IR | hard clip → high gain → Fredman 57/57 IR | metal, death, ir |
+| Doom Wall IR | Big Muff → dark amp → Orange PPC IR | metal, doom, ir |
 
 </details>
 
@@ -265,6 +337,7 @@ Open JSON with a versioned envelope. Minimal example:
       "masterVolume": -6,
       "outputTrim": 0,
       "limiter": true,
+      "feedbackGuard": true,
       "bypass": false
     }
   }
@@ -313,6 +386,7 @@ Return ONLY valid JSON, without markdown fences, comments or explanations:
         {"kind": "fuzz", "enabled": false},
         {"kind": "amp", "enabled": true},
         {"kind": "cabinet", "enabled": true},
+        {"kind": "ir", "enabled": false},
         {"kind": "chorus", "enabled": false},
         {"kind": "flanger", "enabled": false},
         {"kind": "phaser", "enabled": false},
@@ -330,9 +404,9 @@ Return ONLY valid JSON, without markdown fences, comments or explanations:
 }
 
 Rules:
-1. `units` must contain exactly 14 kinds in this order: gate, compressor,
-   boost, overdrive, distortion, fuzz, amp, cabinet, chorus, flanger, phaser,
-   tremolo, delay, reverb. Enable the ones you need.
+1. `units` must contain exactly 15 kinds in this order: gate, compressor,
+   boost, overdrive, distortion, fuzz, amp, cabinet, ir, chorus, flanger,
+   phaser, tremolo, delay, reverb. Enable the ones you need.
 2. Parameters are optional — omit them to use factory defaults. When present,
    use real units: dB, Hz, ms; percentages are 0…1.
 3. Switches: amp.voicing 0 Clean / 1 Crunch / 2 Lead / 3 High Gain;
@@ -359,7 +433,7 @@ version.
 
 - **Leave `outputTrim: 0`** when generating. After import, adjust level with
   the **PRESET** slider so presets do not jump in volume.
-- **List all 14 `kind` values explicitly.** Omitted units are added with factory
+- **List all 15 `kind` values explicitly.** Omitted units are added with factory
   defaults (amp, cabinet and reverb are enabled by default), which can add
   unexpected reverb.
 - **The model cannot hear your rig.** The same JSON sounds different on another
@@ -437,7 +511,7 @@ Sources/
   BoardCore/              # no Core Audio/AppKit: DSP, models, presets
     DSP/                  # effect nodes, oversampler, reverb, limiter
     BoardSettings.swift   # complete board snapshot
-    BuiltInPresets.swift  # 24 factory rigs
+    BuiltInPresets.swift  # 30 factory rigs
   GtrBoard/
     Audio/                # HAL, aggregate device, render callback, recorder
     UI/                   # SwiftUI: pedalboard, EQ, presets, footer
@@ -464,18 +538,22 @@ crossfaded in over 50 ms while the current chain keeps playing and fades out.
 Covered:
 
 - effect catalogue and parameter normalisation;
-- serialisation of all 24 factory presets and tolerant decoding;
+- serialisation of all 30 factory presets and tolerant decoding;
 - preset store write/read/export/import;
 - biquad and graphic-EQ frequency response;
 - rendering every factory rig: finite, no clipping, signal present;
 - gate, compressor, drives, amp, delay, reverb, modulation;
+- IR: cabinet library, convolution vs direct convolution, 16/24/32-bit and
+  float WAV import, click-free model switching;
+- feedback guard: howl, mains hum, a low B next to 50/60 Hz, silence, a closed
+  acoustic loop and the latched mute;
 - bypass, master, limiter;
 - crossfade: no click, no silence gap, no level jump;
 - validity of the AI example in `docs/examples/`;
 - throughput: a full high-gain board renders ~75× faster than real time on
   Apple Silicon.
 
-Current run: **702 checks**, all passing. GitHub Actions runs the same suite on
+Current run: **906 checks**, all passing. GitHub Actions runs the same suite on
 every push and pull request and uploads the built `.app` as an artifact.
 
 ## <a id="trouble"></a>Troubleshooting

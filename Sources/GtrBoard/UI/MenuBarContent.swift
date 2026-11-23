@@ -25,6 +25,14 @@ struct MenuBarContent: View {
         Button(model.isBypassed ? "Enable Processing" : "Bypass Processing") {
             model.setBypass(!model.isBypassed)
         }
+        Button(model.settings.feedbackGuard ? "Disable Feedback Guard" : "Enable Feedback Guard") {
+            model.setFeedbackGuard(!model.settings.feedbackGuard)
+        }
+        if model.guardStatus.muted {
+            Button("Re-arm Feedback Guard") {
+                model.resetFeedbackMute()
+            }
+        }
         Button(model.hasBothBanks ? "Switch A/B  (Space)" : "Toggle Bypass  (Space)") {
             model.handleSpace()
         }

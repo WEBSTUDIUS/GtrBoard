@@ -218,6 +218,9 @@ struct PedalCard: View {
     var onToggle: () -> Void
     var onParameter: (String, Double) -> Void
     var onMove: (Int) -> Void
+    /// Extra actions for the IR pedal; nil for every other pedal.
+    var onImportIR: (() -> Void)? = nil
+    var customIRName: String? = nil
 
     @State private var hovering = false
 
@@ -226,15 +229,21 @@ struct PedalCard: View {
     private var width: CGFloat {
         switch unit.kind {
         case .amp: return 246
-        case .delay, .cabinet, .reverb: return 198
+        case .delay, .cabinet, .ir, .reverb: return 198
         default: return 178
         }
     }
     private var columns: Int {
-        let count = descriptor.parameters.count
-        if count <= 3 { return 2 }
+        let count = visibleParameters.count
         if count <= 4 { return 2 }
         return 3
+    }
+
+    /// The IR model is picked from a menu, not a knob, so it is left out of
+    /// the knob grid.
+    private var visibleParameters: [FXParameter] {
+        guard unit.kind == .ir else { return descriptor.parameters }
+        return descriptor.parameters.filter { $0.id != "model" }
     }
 
     var body: some View {
@@ -242,11 +251,15 @@ struct PedalCard: View {
             header
             Hairline().opacity(0.6)
 
+            if unit.kind == .ir {
+                irModelSelector
+            }
+
             LazyVGrid(
                 columns: Array(repeating: GridItem(.flexible(), spacing: 2), count: columns),
                 spacing: 8
             ) {
-                ForEach(descriptor.parameters) { parameter in
+                ForEach(visibleParameters) { parameter in
                     Knob(
                         parameter: parameter,
                         value: Binding(
@@ -278,6 +291,79 @@ struct PedalCard: View {
         .shadow(color: unit.enabled ? tint.opacity(0.14) : .clear, radius: 12, y: 5)
         .opacity(unit.enabled ? 1 : 0.74)
         .onHover { hovering = $0 }
+    }
+
+
+    /// Cabinet selector for the IR pedal. Built-in cabs, the custom WAV slot
+    /// and the import action live in one menu so the card stays compact.
+    private var irModelSelector: some View {
+        let choices = descriptor.parameter("model")?.choices ?? []
+        let current = Int(unit.value("model").rounded())
+        let isCustom = current == CabinetIRLibrary.customIndex
+        let label: String = {
+            if isCustom, let customIRName {
+                return customIRName
+            }
+            return choices.indices.contains(current) ? choices[current] : "Cabinet"
+        }()
+
+        return Menu {
+            ForEach(Array(choices.enumerated()), id: \.offset) { index, name in
+                Button {
+                    // Picking the custom slot without an imported file opens
+                    // the importer instead of silently falling back.
+                    if index == CabinetIRLibrary.customIndex, customIRName == nil {
+                        onImportIR?()
+                    } else {
+                        onParameter("model", Double(index))
+                    }
+                } label: {
+                    if index == current {
+                        Label(name, systemImage: "checkmark")
+                    } else {
+                        Text(name)
+                    }
+                }
+            }
+            Divider()
+            Button {
+                onImportIR?()
+            } label: {
+                Label("Import WAV…", systemImage: "square.and.arrow.down")
+            }
+            if customIRName != nil {
+                Text("Custom slot: \(customIRName!)")
+            }
+        } label: {
+            HStack(spacing: 5) {
+                Image(systemName: "waveform")
+                    .font(.system(size: 9, weight: .semibold))
+                    .foregroundStyle(tint.opacity(unit.enabled ? 1 : 0.5))
+                Text(label)
+                    .font(.system(size: 9, weight: .medium))
+                    .foregroundStyle(Theme.text)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.7)
+                Spacer(minLength: 2)
+                Image(systemName: "chevron.up.chevron.down")
+                    .font(.system(size: 6.5, weight: .bold))
+                    .foregroundStyle(Theme.faint)
+            }
+            .padding(.horizontal, 8)
+            .frame(height: 26)
+            .background(
+                RoundedRectangle(cornerRadius: 7, style: .continuous)
+                    .fill(Color.white.opacity(0.04))
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 7, style: .continuous)
+                    .stroke(Theme.stroke, lineWidth: 1)
+            )
+        }
+        .menuStyle(.borderlessButton)
+        .menuIndicator(.hidden)
+        .fixedSize(horizontal: false, vertical: true)
+        .help("Speaker impulse response · import your own WAV with the menu")
     }
 
     private var header: some View {

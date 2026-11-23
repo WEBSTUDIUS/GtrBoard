@@ -23,6 +23,10 @@ public struct BoardSettings: Codable, Equatable, Sendable {
     public var outputTrim: Double
     /// Look-ahead limiter protecting the output.
     public var limiter: Bool
+    /// Automatic feedback / open-jack suppressor at the very start of the
+    /// chain. On by default: a dangling cable into a high-gain rig must not be
+    /// able to turn the app into a howling oscillator.
+    public var feedbackGuard: Bool
     /// Passes the guitar through untouched while keeping the engine running.
     public var bypass: Bool
 
@@ -32,6 +36,7 @@ public struct BoardSettings: Codable, Equatable, Sendable {
         masterVolume: Double = -6,
         outputTrim: Double = 0,
         limiter: Bool = true,
+        feedbackGuard: Bool = true,
         bypass: Bool = false
     ) {
         self.units = units
@@ -39,11 +44,12 @@ public struct BoardSettings: Codable, Equatable, Sendable {
         self.masterVolume = masterVolume
         self.outputTrim = outputTrim
         self.limiter = limiter
+        self.feedbackGuard = feedbackGuard
         self.bypass = bypass
     }
 
     private enum CodingKeys: String, CodingKey {
-        case units, graphicEQ, masterVolume, outputTrim, limiter, bypass
+        case units, graphicEQ, masterVolume, outputTrim, limiter, feedbackGuard, bypass
     }
 
     /// Tolerant decoder used by saved boards and imported presets.
@@ -54,6 +60,7 @@ public struct BoardSettings: Codable, Equatable, Sendable {
         masterVolume = try container.decodeIfPresent(Double.self, forKey: .masterVolume) ?? -6
         outputTrim = try container.decodeIfPresent(Double.self, forKey: .outputTrim) ?? 0
         limiter = try container.decodeIfPresent(Bool.self, forKey: .limiter) ?? true
+        feedbackGuard = try container.decodeIfPresent(Bool.self, forKey: .feedbackGuard) ?? true
         bypass = try container.decodeIfPresent(Bool.self, forKey: .bypass) ?? false
     }
 

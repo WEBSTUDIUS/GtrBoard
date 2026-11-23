@@ -43,7 +43,11 @@ struct BoardView: View {
                             },
                             onMove: { offset in
                                 model.moveUnit(unit.kind, by: offset)
-                            }
+                            },
+                            onImportIR: unit.kind == .ir ? {
+                                model.importImpulseResponse()
+                            } : nil,
+                            customIRName: model.customIRName
                         )
 
                         if index < units.count - 1 {

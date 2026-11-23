@@ -54,6 +54,8 @@ struct FooterBar: View {
                 label: "LIMIT"
             )
 
+            guardControl
+
             IconButton(systemName: "arrow.clockwise", help: "Refresh audio devices") {
                 model.refreshDevices()
             }
@@ -62,6 +64,72 @@ struct FooterBar: View {
         .frame(height: 56)
         .background(Theme.panelSoft)
         .overlay(alignment: .top) { Hairline() }
+    }
+
+
+    /// Feedback guard switch plus a live status badge. The switch is the
+    /// explicit off button; the badge only appears while the guard is doing
+    /// something and doubles as the re-arm control after a MUTED latch.
+    private var guardControl: some View {
+        HStack(spacing: 6) {
+            MiniSwitch(
+                isOn: Binding(
+                    get: { model.settings.feedbackGuard },
+                    set: { model.setFeedbackGuard($0) }
+                ),
+                tint: Theme.mint,
+                label: "GUARD"
+            )
+            .help("Automatic feedback guard: notches howls above 2 kHz and mains hum. Switch it off here if a sustained note gets caught.")
+
+            if model.settings.feedbackGuard, model.guardStatus.isActive {
+                guardBadge
+            }
+        }
+    }
+
+    private var guardBadge: some View {
+        let status = model.guardStatus
+        let muted = status.muted
+        let tint: Color = muted
+            ? Theme.red
+            : (status.humDetected ? Theme.amber : Theme.red)
+        let title: String = {
+            if muted { return "MUTED" }
+            if status.humDetected { return "HUM" }
+            if status.activeNotches > 0 { return "FB \(status.activeNotches)" }
+            if status.gainReductionDB < -0.2 { return "DUCK" }
+            return ""
+        }()
+
+        return Button {
+            if muted { model.resetFeedbackMute() }
+        } label: {
+            HStack(spacing: 3) {
+                Image(systemName: muted
+                      ? "speaker.slash.fill"
+                      : "exclamationmark.triangle.fill")
+                    .font(.system(size: 8, weight: .semibold))
+                Text(title)
+                    .font(.system(size: 8, weight: .semibold))
+                    .tracking(0.4)
+            }
+            .foregroundStyle(tint)
+            .padding(.horizontal, 6)
+            .frame(height: 22)
+            .background(
+                RoundedRectangle(cornerRadius: 6, style: .continuous)
+                    .fill(tint.opacity(0.12))
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 6, style: .continuous)
+                    .stroke(tint.opacity(0.4), lineWidth: 1)
+            )
+        }
+        .buttonStyle(.plain)
+        .help(muted
+              ? "The input is muted because a feedback loop would not stop. Click to re-arm — headphones or an interface are the real fix."
+              : "Feedback guard is working on this signal.")
     }
 
     private var divider: some View {

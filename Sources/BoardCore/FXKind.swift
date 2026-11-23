@@ -37,6 +37,7 @@ public enum FXKind: String, Codable, CaseIterable, Identifiable, Sendable {
     case fuzz
     case amp
     case cabinet
+    case ir
     case chorus
     case flanger
     case phaser
@@ -58,7 +59,7 @@ public enum FXKind: String, Codable, CaseIterable, Identifiable, Sendable {
     /// modulation → time effects.
     public static let defaultChain: [FXKind] = [
         .gate, .compressor, .boost, .overdrive, .distortion, .fuzz,
-        .amp, .cabinet,
+        .amp, .cabinet, .ir,
         .chorus, .flanger, .phaser, .tremolo,
         .delay, .reverb
     ]
@@ -252,6 +253,23 @@ public enum FXCatalog {
                     p("resonance", "Resonance", 0...12, 4, .decibels)
                 ],
                 defaultEnabled: true
+            ),
+            FXDescriptor(
+                kind: .ir,
+                name: "IR Cabinet",
+                shortName: "IR",
+                subtitle: "Loaded speaker impulse responses",
+                category: .amp,
+                colorHex: 0x14B8A6,
+                parameters: [
+                    p("model", "Cabinet", 0...Double(CabinetIRLibrary.models.count), 0, .choice,
+                      choices: CabinetIRLibrary.presetNames),
+                    p("mix", "Mix", 0...1, 1, .percent),
+                    p("lowCut", "Low Cut", 40...250, 80, .hertz, log: true),
+                    p("highCut", "High Cut", 3_000...16_000, 9_000, .hertz, log: true),
+                    p("level", "Level", -24...12, 0, .decibels)
+                ],
+                defaultEnabled: false
             ),
             FXDescriptor(
                 kind: .chorus,

@@ -46,6 +46,7 @@ GtrBoard хранит пресеты в открытом JSON. Это значи
         {"kind": "fuzz", "enabled": false},
         {"kind": "amp", "enabled": true},
         {"kind": "cabinet", "enabled": true},
+        {"kind": "ir", "enabled": false},
         {"kind": "chorus", "enabled": false},
         {"kind": "flanger", "enabled": false},
         {"kind": "phaser", "enabled": false},
@@ -57,14 +58,15 @@ GtrBoard хранит пресеты в открытом JSON. Это значи
       "masterVolume": -6,
       "outputTrim": 0,
       "limiter": true,
+      "feedbackGuard": true,
       "bypass": false
     }
   }
 }
 
 Правила:
-1. В units должны быть ровно 14 объектов kind в этом порядке:
-   gate, compressor, boost, overdrive, distortion, fuzz, amp, cabinet,
+1. В units должны быть ровно 15 объектов kind в этом порядке:
+   gate, compressor, boost, overdrive, distortion, fuzz, amp, cabinet, ir,
    chorus, flanger, phaser, tremolo, delay, reverb.
 2. Включай только нужные педали через enabled: true/false. Для ненужных
    параметры можно не указывать — возьмутся заводские значения.
@@ -79,8 +81,10 @@ GtrBoard хранит пресеты в открытом JSON. Это значи
 5. graphicEQ.gains — ровно 10 чисел в dB, порядок:
    31.5, 63, 125, 250, 500, 1k, 2k, 4k, 8k, 16k Гц.
 6. masterVolume: -60…12 dB; outputTrim: -24…24 dB.
-7. Не добавляй поля id, createdAt, modifiedAt, isBuiltIn.
-8. Никаких markdown-ограждений, только JSON.
+7. feedbackGuard (true по умолчанию) включает авто-подавитель обратной
+   связи и наводки перед цепью.
+8. Не добавляй поля id, createdAt, modifiedAt, isBuiltIn.
+9. Никаких markdown-ограждений, только JSON.
 ```
 
 > Если модель всё-таки обернула ответ в ` ```json ... ``` `, удалите
@@ -95,13 +99,13 @@ GtrBoard хранит пресеты в открытом JSON. Это значи
 ### Порядок цепи
 
 ```
-gate → compressor → boost → overdrive → distortion → fuzz → amp → cabinet
+gate → compressor → boost → overdrive → distortion → fuzz → amp → cabinet → ir
 → chorus → flanger → phaser → tremolo → delay → reverb
 ```
 
 Порядок в массиве `units` задаёт порядок в цепи. Каждый `kind` должен
 встречаться не более одного раза; отсутствующие единицы будут добавлены с
-заводскими настройками, поэтому лучше перечислять все 14.
+заводскими настройками, поэтому лучше перечислять все 15.
 
 ### Педали
 
@@ -115,12 +119,38 @@ gate → compressor → boost → overdrive → distortion → fuzz → amp → 
 | `fuzz` | `sustain` 0…1 (0.7), `tone` 0…1 (0.5), `level` −30…6 dB (−6), `bias` 0…1 (0.5) |
 | `amp` | `gain` 0…40 dB (12), `bass`/`mid`/`treble` −12…12 dB (0), `presence` 0…12 dB (3), `master` −40…6 dB (−8), `voicing` 0…3 (1) |
 | `cabinet` | `lowCut` 40…250 Hz (80), `highCut` 2000…12000 Hz (5500), `resonance` 0…12 dB (4) |
+| `ir` | `model` 0…12 (0), `mix` 0…1 (1), `lowCut` 40…250 Hz (80), `highCut` 3000…16000 Hz (9000), `level` −24…12 dB (0) |
 | `chorus` | `rate` 0.05…8 Hz (0.8), `depth` 0…1 (0.5), `mix` 0…1 (0.4), `width` 0…1 (0.7) |
 | `flanger` | `rate` 0.02…5 Hz (0.25), `depth` 0…1 (0.6), `feedback` −0.95…0.95 (0.35), `mix` 0…1 (0.5), `manual` 0.5…10 ms (2.5) |
 | `phaser` | `rate` 0.02…5 Hz (0.35), `depth` 0…1 (0.6), `feedback` 0…0.9 (0.3), `mix` 0…1 (0.5), `stages` 0…3 (1) |
 | `tremolo` | `rate` 0.2…12 Hz (4.5), `depth` 0…1 (0.6), `shape` 0…2 (0), `stereo` 0…1 (0) |
 | `delay` | `time` 20…1500 ms (380), `feedback` 0…0.95 (0.35), `mix` 0…1 (0.3), `tone` 0…1 (0.55), `mode` 0…2 (1) |
 | `reverb` | `size` 0…1 (0.55), `damping` 0…1 (0.45), `mix` 0…1 (0.22), `predelay` 0…120 ms (20), `mode` 0…2 (1) |
+
+### IR-кабинеты
+
+`ir.model` — индекс импульса. Встроенные кабинеты синтезированы в GtrBoard и
+одинаковы на всех машинах; индекс 12 — слот пользовательского WAV, которого
+у получателя пресета может не быть (тогда звучит V30 4x12 · SM57).
+
+| Индекс | Кабинет |
+|---|---|
+| 0 | V30 4x12 · SM57 |
+| 1 | V30 4x12 · 57+121 |
+| 2 | Mesa OS · SM57 |
+| 3 | 1960 · G12T-75 |
+| 4 | 1960 · V30 |
+| 5 | Diezel 4x12 · V30 |
+| 6 | ENGL 4x12 · V30 |
+| 7 | Orange PPC412 · V30 |
+| 8 | 5150 · Sheffield |
+| 9 | Fredman · 57/57 |
+| 10 | Djent · Low-Cut Tight |
+| 11 | Modern Metal · Scoop+ |
+| 12 | Custom WAV (импорт в приложении) |
+
+IR-педаль стоит после аналогового кабинета. Для IR-пресета включайте `ir` и
+выключайте `cabinet`, иначе кабинеты складываются и звук темнеет.
 
 ### Переключатели
 
@@ -178,7 +208,7 @@ gate → compressor → boost → overdrive → distortion → fuzz → amp → 
 | Пресет пустой/тихий | Включены ли `amp` и `cabinet`; не стоит ли `bypass: true` |
 | Слишком громко | Уменьшите `masterVolume`/`outputTrim` или ползунок PRESET |
 | Нет эффекта | `enabled: true` у нужной педали и параметры в реальных единицах |
-| Не тот порядок | Массив `units` задаёт порядок; перечислите все 14 kind в нужном порядке |
+| Не тот порядок | Массив `units` задаёт порядок; перечислите все 15 kind в нужном порядке |
 
 ## Исходный формат
 

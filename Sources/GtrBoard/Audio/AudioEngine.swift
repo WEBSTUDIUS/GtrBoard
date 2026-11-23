@@ -130,6 +130,9 @@ final class AudioEngine: @unchecked Sendable {
     private var actualBufferFrames = 128
     private var sampleRate: Double = 48_000
     private var currentSettings = BoardSettings.defaultBoard()
+    /// User IR staged for the next start. Guarded by `operationLock` because
+    /// the UI can import a file while the engine is being started.
+    private var pendingCustomIR: (samples: [Float], sampleRate: Double)?
     private var generation = 0
     private var stopRequested = false
 
@@ -243,6 +246,21 @@ final class AudioEngine: @unchecked Sendable {
         processor.update(settings: currentSettings, transition: transition)
     }
 
+    /// Stages a user impulse response. The processor builds its kernels on the
+    /// next `prepare`, which happens during a start; callers restart the engine
+    /// so the new cab is audible immediately.
+    func setCustomImpulseResponse(samples: [Float], sampleRate: Double) {
+        operationLock.lock()
+        pendingCustomIR = (samples, sampleRate)
+        operationLock.unlock()
+    }
+
+    func clearCustomImpulseResponse() {
+        operationLock.lock()
+        pendingCustomIR = nil
+        operationLock.unlock()
+    }
+
     private func isCurrent(_ operation: Int) -> Bool {
         operationLock.lock()
         defer { operationLock.unlock() }
@@ -296,6 +314,16 @@ final class AudioEngine: @unchecked Sendable {
                 outputChannels: outputChannelCount
             )
             unit = createdUnit
+
+            operationLock.lock()
+            let stagedIR = pendingCustomIR
+            operationLock.unlock()
+            if let stagedIR {
+                processor.setCustomImpulseResponse(
+                    samples: stagedIR.samples,
+                    sampleRate: stagedIR.sampleRate
+                )
+            }
 
             processor.prepare(sampleRate: sampleRate, maxFrames: maxFrames)
             processor.update(settings: currentSettings)

@@ -34,6 +34,7 @@ public final class BoardProcessor: @unchecked Sendable {
     private var sharedMasterDB: Double = -6
     private var sharedBypass = false
     private var sharedLimiter = true
+    private var sharedGuardEnabled = true
     private var sharedRevision: UInt64 = 0
     private var sharedIsPresetTransition = false
 
@@ -71,6 +72,15 @@ public final class BoardProcessor: @unchecked Sendable {
 
     /// Output/input peak meter read by the interface.
     public let levels = LevelMeter()
+
+    /// Live state of the feedback/open-input suppressor.
+    public var guardStatus: FeedbackGuardMeter { feedback.meter }
+
+    /// Automatic feedback guard that runs before the chain.
+    private let feedback = FeedbackSuppressor()
+
+    /// User IR staged for the next `prepare` call.
+    private var customIR: (samples: [Float], sampleRate: Double)?
 
     public init() {
         lock = .allocate(capacity: 1)
@@ -131,6 +141,7 @@ public final class BoardProcessor: @unchecked Sendable {
         case .overdrive, .distortion, .fuzz: return DriveNode(kind: kind)
         case .amp: return AmpNode()
         case .cabinet: return CabinetNode()
+        case .ir: return IRCabinetNode()
         case .chorus: return ChorusNode()
         case .flanger: return FlangerNode()
         case .phaser: return PhaserNode()
@@ -140,8 +151,24 @@ public final class BoardProcessor: @unchecked Sendable {
         }
     }
 
-    /// Latency in frames introduced by the output limiter (both chains match).
-    public var latencyFrames: Int { chains[activeChain].limiter.latencyFrames }
+    /// Latency in frames introduced by the output limiter and, when the IR
+    /// pedal is engaged, its convolver block. Reads the published snapshot so
+    /// the value is right before the first render callback has run.
+    public var latencyFrames: Int {
+        var irEnabled = false
+        os_unfair_lock_lock(lock)
+        if let irIndex = Self.nodeIndices[.ir] {
+            for slot in 0..<min(sharedChainCount, Self.maxUnits) where sharedEnabled[slot] {
+                if Int(sharedOrder[slot]) == irIndex {
+                    irEnabled = true
+                    break
+                }
+            }
+        }
+        os_unfair_lock_unlock(lock)
+        return chains[activeChain].limiter.latencyFrames
+            + (irEnabled ? IRCabinetNode.latencyFrames : 0)
+    }
 
     /// Sample rate of the current session.
     public var currentSampleRate: Double { sampleRate }
@@ -171,8 +198,11 @@ public final class BoardProcessor: @unchecked Sendable {
 
         crossfadeStep = 1 / max(1, 0.050 * sampleRate)
         for chain in chains {
+            chain.stageCustomImpulse(customIR)
             chain.prepare(sampleRate: sampleRate, maxFrames: maxFrames)
         }
+        feedback.prepare(sampleRate: sampleRate, maxFrames: maxFrames)
+        feedback.setEnabled(sharedGuardEnabled)
         activeChain = 0
         incomingChain = 1
         crossfadeActive = false
@@ -222,6 +252,7 @@ public final class BoardProcessor: @unchecked Sendable {
         sharedMasterDB = clean.masterVolume + clean.outputTrim
         sharedBypass = clean.bypass
         sharedLimiter = clean.limiter
+        sharedGuardEnabled = clean.feedbackGuard
         sharedIsPresetTransition = wantsTransition
         sharedRevision &+= 1
 
@@ -233,10 +264,28 @@ public final class BoardProcessor: @unchecked Sendable {
         for chain in chains {
             chain.reset()
         }
+        feedback.reset()
         activeChain = 0
         incomingChain = 1
         crossfadeActive = false
         crossfadeProgress = 0
+    }
+
+    /// Stages a user impulse response for the next `prepare` call. The
+    /// convolver kernels are built there, so call this only while audio is
+    /// stopped (the app restarts the engine after an import).
+    public func setCustomImpulseResponse(samples: [Float], sampleRate: Double) {
+        customIR = (samples, sampleRate)
+    }
+
+    /// Removes the staged custom impulse response.
+    public func clearCustomImpulseResponse() {
+        customIR = nil
+    }
+
+    /// Clears the latched feedback mute after the user hits MUTED.
+    public func requestFeedbackMuteReset() {
+        feedback.requestPanicReset()
     }
 
     /// Best-effort snapshot pull. Uses `trylock` so the UI can never block the
@@ -257,6 +306,10 @@ public final class BoardProcessor: @unchecked Sendable {
             appliedRevision = revision
             os_unfair_lock_unlock(lock)
 
+            feedback.setEnabled(sharedGuardEnabled)
+            // A preset change is the user's attempt to fix the sound; don't
+            // leave the input muted from the previous rig.
+            feedback.requestPanicReset()
             let started = mach_absolute_time()
             // Reset state first, then apply the new snapshot. The other order
             // wipes the graphic EQ targets (reset() puts them back to flat),
@@ -277,6 +330,7 @@ public final class BoardProcessor: @unchecked Sendable {
         let target = crossfadeActive ? chains[incomingChain] : chains[activeChain]
         copySharedLocked(to: target)
         os_unfair_lock_unlock(lock)
+        feedback.setEnabled(sharedGuardEnabled)
         target.apply()
     }
 
@@ -324,6 +378,13 @@ public final class BoardProcessor: @unchecked Sendable {
             for index in 0..<chunk {
                 let peak = max(abs(l[index]), abs(r[index]))
                 if peak > Double(inputPeak) { inputPeak = Float(peak) }
+            }
+
+            // The guard hears the raw input and works before any pedal gain,
+            // which is the only place a howl can still be stopped cleanly.
+            feedback.process(left: l, right: r, frames: chunk)
+
+            for index in 0..<chunk {
                 let dryLeft = l[index]
                 let dryRight = r[index]
                 dryL[index] = dryLeft
@@ -353,6 +414,7 @@ public final class BoardProcessor: @unchecked Sendable {
                 )
             }
 
+            var chunkPeak = 0.0
             for index in 0..<chunk {
                 var leftSample: Double
                 var rightSample: Double
@@ -376,7 +438,9 @@ public final class BoardProcessor: @unchecked Sendable {
                 r[index] = rightSample
                 let peak = max(abs(leftSample), abs(rightSample))
                 if peak > Double(outputPeak) { outputPeak = Float(peak) }
+                if peak > chunkPeak { chunkPeak = peak }
             }
+            feedback.noteOutputPeak(Float(chunkPeak))
 
             if crossfadeActive, crossfadeProgress >= 1 {
                 activeChain = b
@@ -439,6 +503,14 @@ private final class BoardChain {
         equalizer.prepare(sampleRate: sampleRate)
         limiter.prepare(sampleRate: sampleRate)
         reset()
+    }
+
+    /// Hands the user IR to the IR pedal before it is prepared.
+    func stageCustomImpulse(_ impulse: (samples: [Float], sampleRate: Double)?) {
+        let irIndex = FXKind.allCases.firstIndex(of: .ir) ?? 0
+        guard nodes.indices.contains(irIndex),
+              let node = nodes[irIndex] as? IRCabinetNode else { return }
+        node.setCustomSource(samples: impulse?.samples, sampleRate: impulse?.sampleRate ?? 0)
     }
 
     func reset() {

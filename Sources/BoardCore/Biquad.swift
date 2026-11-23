@@ -78,7 +78,7 @@ public enum BiquadDesign {
 
         let nyquistLimit = sampleRate * 0.49
         let f = frequency.clamped(to: 10...max(11, nyquistLimit))
-        let q = q.clamped(to: 0.05...20)
+        let q = q.clamped(to: 0.05...60)
         let w0 = 2 * Double.pi * f / sampleRate
         let cosW = cos(w0)
         let sinW = sin(w0)

@@ -140,6 +140,9 @@ func bareBoard(master: Double = 0) -> BoardSettings {
     settings.masterVolume = master
     settings.limiter = true
     settings.bypass = false
+    // Isolation: every effect test runs without the automatic guard unless it
+    // is testing the guard itself.
+    settings.feedbackGuard = false
     return settings
 }
 
@@ -155,12 +158,203 @@ func enabling(_ kind: FXKind, in settings: BoardSettings, _ params: [String: Dou
     return copy
 }
 
+
+/// Closes an acoustic loop around the processor: a speaker feeds a microphone
+/// that hears the output with a delay and a loss. Use a delay larger than the
+/// block size so the block can be rendered in one go.
+func renderAcousticLoop(
+    settings: BoardSettings,
+    seconds: Double,
+    acousticGain: Double,
+    delaySamples: Int,
+    highPassHz: Double = 2_000,
+    blockSize: Int = 128,
+    sampleRate: Double = 48_000
+) -> (output: [Double], processor: BoardProcessor) {
+    let processor = makeProcessor(settings, sampleRate: sampleRate)
+    // A real speaker/microphone path loses the low end; without this the
+    // simulated loop howls at 100–300 Hz, which is not what the guard targets.
+    let pathHighPass = BiquadDesign.coefficients(
+        shape: .highPass, frequency: highPassHz, gainDB: 0, q: 0.707, sampleRate: sampleRate
+    )
+    var pathState = BiquadState()
+    var pathState2 = BiquadState()
+    let frames = Int(seconds * sampleRate)
+    var output = [Double](repeating: 0, count: frames)
+    let capacity = delaySamples + blockSize * 2
+    var ring = [Double](repeating: 0, count: capacity)
+    var writePosition = 0
+    var offset = 0
+    var seed: UInt64 = 0x1234_5678
+
+    while offset < frames {
+        let count = min(blockSize, frames - offset)
+        var block = [Double](repeating: 0, count: count)
+        for index in 0..<count {
+            let readPosition = (writePosition + index + capacity - delaySamples) % capacity
+            var excitation = 0.0
+            if offset + index < 2_400 {
+                seed = seed &* 6_364_136_223_846_793_005 &+ 1_442_695_040_888_963_407
+                excitation = 0.02 * Double(Int64(bitPattern: seed) >> 40) / Double(1 << 23)
+            }
+            var feedback = pathState.process(ring[readPosition], pathHighPass)
+            feedback = pathState2.process(feedback, pathHighPass)
+            block[index] = excitation + acousticGain * feedback
+        }
+        block.withUnsafeMutableBufferPointer { buffer in
+            processor.process(
+                left: buffer.baseAddress!,
+                right: buffer.baseAddress!,
+                frames: count
+            )
+        }
+        for index in 0..<count {
+            output[offset + index] = block[index]
+            ring[(writePosition + index) % capacity] = block[index]
+        }
+        writePosition = (writePosition + count) % capacity
+        offset += count
+    }
+    return (output, processor)
+}
+
 func makeProcessor(_ settings: BoardSettings, sampleRate: Double = 48_000) -> BoardProcessor {
     let processor = BoardProcessor()
     processor.prepare(sampleRate: sampleRate, maxFrames: 256)
     processor.update(settings: settings)
     return processor
 }
+
+/// Plain time-domain convolution used as the reference for the partitioned
+/// convolver. Deliberately naive: it is the ground truth, not the product.
+func directConvolve(_ input: [Double], _ impulse: [Float]) -> [Double] {
+    guard !input.isEmpty, !impulse.isEmpty else { return [] }
+    var output = [Double](repeating: 0, count: input.count + impulse.count - 1)
+    for index in input.indices {
+        let sample = input[index]
+        guard sample != 0 else { continue }
+        for tap in impulse.indices {
+            output[index + tap] += sample * Double(impulse[tap])
+        }
+    }
+    return output
+}
+
+/// Lag that best aligns `candidate` with `reference`, searched up to 256
+/// samples. Used to account for the convolver's one-block pipeline.
+func bestAlignment(_ candidate: [Double], _ reference: [Double]) -> Int {
+    var bestLag = 0
+    var bestScore = -Double.infinity
+    for lag in 0...256 {
+        var dot = 0.0
+        var candidateEnergy = 0.0
+        var referenceEnergy = 0.0
+        var index = 0
+        while index + lag < candidate.count, index < reference.count {
+            dot += candidate[index + lag] * reference[index]
+            candidateEnergy += candidate[index + lag] * candidate[index + lag]
+            referenceEnergy += reference[index] * reference[index]
+            index += 1
+        }
+        let score = dot / sqrt(max(candidateEnergy * referenceEnergy, 1e-12))
+        if score > bestScore {
+            bestScore = score
+            bestLag = lag
+        }
+    }
+    return bestLag
+}
+
+/// Brightness proxy for an impulse response: zero crossings per sample.
+func zeroCrossingRate(_ samples: [Float]) -> Double {
+    guard samples.count > 1 else { return 0 }
+    var crossings = 0
+    for index in 1..<samples.count where (samples[index] >= 0) != (samples[index - 1] >= 0) {
+        crossings += 1
+    }
+    return Double(crossings) / Double(samples.count)
+}
+
+/// Linearly growing tone: the envelope of an acoustic feedback build-up.
+func growingTone(
+    frequency: Double,
+    from start: Double,
+    to end: Double,
+    seconds: Double,
+    sampleRate: Double = 48_000
+) -> [Double] {
+    let count = Int(seconds * sampleRate)
+    return (0..<count).map { index in
+        let position = Double(index) / Double(max(count - 1, 1))
+        let amplitude = start + (end - start) * position
+        return amplitude * sin(2 * .pi * frequency * Double(index) / sampleRate)
+    }
+}
+
+/// Minimal RIFF/WAVE builder for the importer tests.
+func wavData(
+    samples: [Double],
+    sampleRate: Int,
+    channels: Int,
+    bits: Int,
+    floating: Bool
+) -> Data {
+    var payload = Data()
+    func appendSample(_ sample: Double) {
+        let clamped = min(max(sample, -1), 1)
+        if floating {
+            if bits == 32 {
+                var value = Float(clamped).bitPattern.littleEndian
+                withUnsafeBytes(of: &value) { payload.append(contentsOf: $0) }
+            } else {
+                var value = clamped.bitPattern.littleEndian
+                withUnsafeBytes(of: &value) { payload.append(contentsOf: $0) }
+            }
+        } else if bits == 16 {
+            let value = Int16((clamped * 32_767).rounded())
+            var little = value.littleEndian
+            withUnsafeBytes(of: &little) { payload.append(contentsOf: $0) }
+        } else {
+            let value = UInt32(bitPattern: Int32((clamped * 8_388_607).rounded()))
+            payload.append(UInt8(value & 0xFF))
+            payload.append(UInt8((value >> 8) & 0xFF))
+            payload.append(UInt8((value >> 16) & 0xFF))
+        }
+    }
+    for sample in samples {
+        for _ in 0..<channels {
+            appendSample(sample)
+        }
+    }
+
+    var wav = Data()
+    func append32(_ value: UInt32) {
+        var little = value.littleEndian
+        withUnsafeBytes(of: &little) { wav.append(contentsOf: $0) }
+    }
+    func append16(_ value: UInt16) {
+        var little = value.littleEndian
+        withUnsafeBytes(of: &little) { wav.append(contentsOf: $0) }
+    }
+
+    let byteRate = UInt32(sampleRate * channels * bits / 8)
+    let blockAlign = UInt16(channels * bits / 8)
+    wav.append(contentsOf: Array("RIFF".utf8))
+    append32(UInt32(36 + payload.count))
+    wav.append(contentsOf: Array("WAVEfmt ".utf8))
+    append32(16)
+    append16(floating ? 3 : 1)
+    append16(UInt16(channels))
+    append32(UInt32(sampleRate))
+    append32(byteRate)
+    append16(blockAlign)
+    append16(UInt16(bits))
+    wav.append(contentsOf: Array("data".utf8))
+    append32(UInt32(payload.count))
+    wav.append(payload)
+    return wav
+}
+
 
 
 // MARK: - Diagnostic WAV dump
@@ -202,9 +396,9 @@ func writeWAV(_ samples: [Double], sampleRate: Double, to path: String) {
 // MARK: - Catalogue
 
 print("▸ Catalogue")
-expect(FXKind.allCases.count == 14, "fourteen effect kinds")
-expect(FXKind.defaultChain.count == 14, "default chain contains every kind")
-expect(Set(FXKind.defaultChain).count == 14, "default chain has no duplicates")
+expect(FXKind.allCases.count == 15, "fifteen effect kinds")
+expect(FXKind.defaultChain.count == 15, "default chain contains every kind")
+expect(Set(FXKind.defaultChain).count == 15, "default chain has no duplicates")
 
 for kind in FXKind.allCases {
     let descriptor = kind.descriptor
@@ -240,16 +434,16 @@ for kind in FXKind.allCases {
 
 print("▸ Board and presets")
 let defaultBoard = BoardSettings.defaultBoard().sanitized()
-expect(defaultBoard.units.count == 14, "default board contains every pedal")
-expect(Set(defaultBoard.units.map(\.kind)).count == 14, "default board has one unit per kind")
+expect(defaultBoard.units.count == 15, "default board contains every pedal")
+expect(Set(defaultBoard.units.map(\.kind)).count == 15, "default board has one unit per kind")
 expect(defaultBoard.masterVolume >= BoardSettings.masterRange.lowerBound, "master volume is in range")
 
 var shuffled = defaultBoard
 shuffled.units.shuffle()
 shuffled.units.append(FXUnit(kind: .delay))
 let cleaned = shuffled.sanitized()
-expect(cleaned.units.count == 14, "sanitising removes duplicates and restores missing kinds")
-expect(Set(cleaned.units.map(\.kind)).count == 14, "sanitised board still has every kind")
+expect(cleaned.units.count == 15, "sanitising removes duplicates and restores missing kinds")
+expect(Set(cleaned.units.map(\.kind)).count == 15, "sanitised board still has every kind")
 
 expect(BuiltInPresets.all.count >= 18, "at least eighteen factory presets")
 var presetIDs = Set<String>()
@@ -257,7 +451,7 @@ for preset in BuiltInPresets.all {
     expect(!preset.name.isEmpty, "preset has a name")
     expect(preset.isBuiltIn, "\(preset.name) is marked built-in")
     expect(presetIDs.insert(preset.id).inserted, "\(preset.name) id is unique")
-    expect(preset.settings.units.count == 14, "\(preset.name) has a full chain")
+    expect(preset.settings.units.count == 15, "\(preset.name) has a full chain")
     expect(preset.settings.sanitized() == preset.settings, "\(preset.name) is already sanitised")
     expect(!preset.gear.isEmpty, "\(preset.name) documents its gear")
     expect(!preset.notes.isEmpty, "\(preset.name) has notes")
@@ -671,10 +865,418 @@ do {
     expect(ratio < 0.75, "clean amp does not add spurious peaks (got \(ratio))")
 }
 
+
+// MARK: - Impulse responses
+
+print("▸ IR library")
+do {
+    let models = CabinetIRLibrary.models
+    expect(models.count >= 12, "library ships at least twelve cabs (\(models.count))")
+    expect(Set(models.map(\.name)).count == models.count, "cab names are unique")
+    expect(CabinetIRLibrary.presetNames.count == models.count + 1, "one custom slot after the built-ins")
+    expect(CabinetIRLibrary.presetNames.last == CabinetIRLibrary.customName, "custom slot is last")
+
+    var responses: [[Float]] = []
+    for (index, model) in models.enumerated() {
+        let ir = CabinetIRLibrary.impulseResponse(at: index, sampleRate: sampleRate)
+        responses.append(ir)
+        expect(ir.count >= 1_024, "\(model.name) has a usable length")
+        expect(ir.allSatisfy { $0.isFinite }, "\(model.name) is finite")
+        var energy = 0.0
+        for sample in ir { energy += Double(sample) * Double(sample) }
+        expect(abs(energy - 1) < 0.05, "\(model.name) is energy-normalised (E=\(String(format: "%.3f", energy)))")
+        expect(ir.allSatisfy { abs($0) <= 0.96 }, "\(model.name) peaks below full scale")
+    }
+
+    expect(zip(responses, responses.dropFirst()).allSatisfy { left, right in
+        zip(left, right).map { abs($0 - $1) }.max() ?? 0 > 0.01
+    }, "every cab has its own response")
+
+    if models.count > 7 {
+        let bright = zeroCrossingRate(responses[6])   // ENGL
+        let dark = zeroCrossingRate(responses[7])     // Orange
+        expect(bright > dark, "bright cab is brighter than the doom cab")
+    }
+}
+
+print("▸ IR convolution")
+do {
+    var seed: UInt64 = 0xDEAD_BEEF_1234_5678
+    func noise() -> Double {
+        seed = seed &* 6_364_136_223_846_793_005 &+ 1_442_695_040_888_963_407
+        return Double(Int64(bitPattern: seed) >> 11) / Double(1 << 52)
+    }
+
+    let input = (0..<2_048).map { _ in noise() }
+    var impulse = [Float](repeating: 0, count: 400)
+    for index in impulse.indices { impulse[index] = Float(noise() * 0.1) }
+    impulse[0] = 0.5
+    impulse[17] = -0.25
+
+    let convolver = IRConvolver(impulse: impulse)
+    var output = input
+    input.withUnsafeBufferPointer { source in
+        output.withUnsafeMutableBufferPointer { destination in
+            var offset = 0
+            while offset < destination.count {
+                let count = min(128, destination.count - offset)
+                convolver.process(
+                    input: source.baseAddress!.advanced(by: offset),
+                    output: destination.baseAddress!.advanced(by: offset),
+                    frames: count
+                )
+                offset += count
+            }
+        }
+    }
+
+    let reference = directConvolve(input, impulse)
+    let lag = bestAlignment(output, reference)
+    print("  • convolver pipeline lag: \(lag) samples")
+    expect(lag <= 128, "convolver latency stays under two blocks")
+
+    let limit = max(0, min(reference.count, output.count - lag))
+    var error = 0.0
+    var signal = 0.0
+    for index in 0..<limit {
+        let difference = output[index + lag] - reference[index]
+        error += difference * difference
+        signal += reference[index] * reference[index]
+    }
+    let relative = sqrt(error / max(signal, 1e-12))
+    expect(relative < 0.01, "partitioned convolution matches direct convolution (rel \(String(format: "%.2e", relative)))")
+}
+
+print("▸ IR cabinet")
+do {
+    var settings = bareBoard(master: 0)
+    settings.limiter = false
+    settings = enabling(.ir, in: settings, [
+        "model": 0, "mix": 1, "lowCut": 40, "highCut": 16_000, "level": 0
+    ])
+    let processor = makeProcessor(settings)
+    let input = guitarPluck(frequency: 110, amplitude: 0.3, seconds: 1.0)
+    let output = render(processor, left: input)
+    expectFinite(output.left, "IR cabinet output is finite")
+    expect(rms(output.left) > 0.01, "IR cabinet produces sound")
+    expect(peak(output.left) <= 1.0001, "IR cabinet respects full scale")
+    expect(processor.latencyFrames >= IRConvolver.latencyFrames,
+           "IR pedal adds its latency to the report")
+}
+
+print("▸ IR preset crossfade and throughput")
+do {
+    guard let modern = BuiltInPresets.all.first(where: { $0.name == "Modern Metal IR" }),
+          let djent = BuiltInPresets.all.first(where: { $0.name == "Djent IR" }) else {
+        expect(false, "IR factory presets are present")
+        exit(1)
+    }
+
+    let processor = BoardProcessor()
+    processor.prepare(sampleRate: 48_000, maxFrames: 256)
+    processor.update(settings: modern.settings)
+    let input = sine(frequency: 220, amplitude: 0.2, seconds: 0.6)
+    let output = renderWithPresetSwitch(
+        processor,
+        input: input,
+        switchFrame: Int(48_000 * 0.2),
+        second: djent.settings
+    )
+    expectFinite(output, "IR preset crossfade is finite")
+    expect(peak(output) <= 1.0001, "IR preset crossfade stays in range")
+    let around = Array(output[9_300..<11_000])
+    let maximumDelta = zip(around, around.dropFirst()).map { abs($0 - $1) }.max() ?? 0
+    expect(maximumDelta < 0.2, "IR preset crossfade has no click")
+
+    let seconds = 3.0
+    let count = Int(sampleRate * seconds)
+    var tune = [Double](repeating: 0, count: count)
+    for index in 0..<count {
+        tune[index] = 0.12 * sin(2 * .pi * 196 * Double(index) / sampleRate)
+    }
+    var irThroughput = modern.settings
+    irThroughput.feedbackGuard = false
+    let started = Date()
+    _ = render(makeProcessor(irThroughput), left: tune, blockSize: 128)
+    let elapsed = Date().timeIntervalSince(started)
+    let factor = seconds / max(elapsed, 1e-9)
+    print(String(format: "  • IR board: %.1fs rendered in %.3fs (%.1fx realtime)", seconds, elapsed, factor))
+    expect(factor > 2, "IR board renders faster than 2x realtime")
+}
+
+print("▸ Custom IR and live switching")
+do {
+    var custom = [Float](repeating: 0, count: 512)
+    custom[0] = 0.8
+    custom[10] = -0.3
+    custom[37] = 0.12
+    let file = ImpulseResponseFile(samples: custom, sampleRate: 48_000)
+
+    var settings = bareBoard(master: 0)
+    settings.limiter = false
+    settings = enabling(.ir, in: settings, [
+        "model": Double(CabinetIRLibrary.customIndex),
+        "mix": 1, "lowCut": 40, "highCut": 16_000, "level": 0
+    ])
+    let processor = BoardProcessor()
+    processor.setCustomImpulseResponse(samples: file.samples, sampleRate: file.sampleRate)
+    processor.prepare(sampleRate: 48_000, maxFrames: 256)
+    processor.update(settings: settings)
+    let input = guitarPluck(frequency: 110, amplitude: 0.3, seconds: 0.8)
+    let output = render(processor, left: input)
+    expectFinite(output.left, "custom IR output is finite")
+    expect(rms(output.left) > 0.01, "custom IR renders through the chain")
+
+    // Switching models under a sustained note must fade, not click or blow up.
+    var first = settings
+    first = enabling(.ir, in: first, ["model": 0])
+    var second = settings
+    second = enabling(.ir, in: second, ["model": 6])
+    let switcher = makeProcessor(first)
+    let tone = sine(frequency: 220, amplitude: 0.2, seconds: 1.0)
+    var switched = tone
+    switched.withUnsafeMutableBufferPointer { buffer in
+        tone.withUnsafeBufferPointer { source in
+            var offset = 0
+            while offset < buffer.count {
+                if offset >= 24_000 {
+                    switcher.update(settings: second)
+                }
+                let count = min(128, buffer.count - offset)
+                switcher.process(
+                    left: buffer.baseAddress!.advanced(by: offset),
+                    right: buffer.baseAddress!.advanced(by: offset),
+                    frames: count
+                )
+                offset += count
+            }
+        }
+    }
+    expectFinite(switched, "IR model switch output is finite")
+    expect(peak(switched) <= 1.0001, "IR model switch stays in range")
+    let around = Array(switched[23_800..<26_000])
+    let maximumDelta = zip(around, around.dropFirst()).map { abs($0 - $1) }.max() ?? 0
+    print(String(format: "  • IR switch max delta: %.4f", maximumDelta))
+    expect(maximumDelta < 0.2, "IR model switch is click-free")
+}
+
+print("▸ IR import")
+do {
+    let tone = (0..<256).map { sin(2 * .pi * 100 * Double($0) / 48_000) * 0.5 }
+
+    let pcm16 = wavData(samples: tone, sampleRate: 48_000, channels: 1, bits: 16, floating: false)
+    do {
+        let file = try ImpulseResponseFile.decode(pcm16)
+        expect(file.channelCount == 1, "16-bit WAV reads one channel")
+        expectClose(file.sampleRate, 48_000, 0.5, "16-bit WAV keeps its sample rate")
+        expect(file.samples.count == tone.count, "16-bit WAV frame count is exact")
+        expectClose(Double(file.samples[60]), tone[60], 0.001, "16-bit WAV sample decodes")
+        let prepared = file.prepared(forSampleRate: 48_000, maxTaps: 8_192)
+        var energy = 0.0
+        for sample in prepared { energy += Double(sample) * Double(sample) }
+        expect(abs(energy - 1) < 0.05, "imported IR is energy-normalised")
+    } catch {
+        expect(false, "16-bit WAV decode failed: \(error)")
+    }
+
+    let pcm24 = wavData(samples: tone, sampleRate: 44_100, channels: 2, bits: 24, floating: false)
+    do {
+        let file = try ImpulseResponseFile.decode(pcm24)
+        expect(file.channelCount == 2, "24-bit stereo WAV reads two channels")
+        expect(file.samples.count == tone.count, "stereo WAV is averaged to mono")
+        let prepared = file.prepared(forSampleRate: 48_000, maxTaps: 8_192)
+        expect(prepared.count > tone.count, "44.1 kHz IR is resampled to the session rate")
+    } catch {
+        expect(false, "24-bit WAV decode failed: \(error)")
+    }
+
+    let float32 = wavData(samples: tone, sampleRate: 96_000, channels: 1, bits: 32, floating: true)
+    do {
+        let file = try ImpulseResponseFile.decode(float32)
+        expectClose(Double(file.samples[60]), tone[60], 0.001, "32-bit float WAV decodes")
+    } catch {
+        expect(false, "float WAV decode failed: \(error)")
+    }
+
+    do {
+        _ = try ImpulseResponseFile.decode(Data("not a wav".utf8))
+        expect(false, "garbage WAV should throw")
+    } catch {
+        expect(true, "garbage WAV throws")
+    }
+}
+
+// MARK: - Feedback guard
+
+print("▸ Feedback guard")
+do {
+    var settings = bareBoard(master: 0)
+    settings.limiter = false
+    settings.feedbackGuard = true
+    let processor = makeProcessor(settings)
+    let silence = [Double](repeating: 0, count: Int(sampleRate * 1.5))
+    let output = render(processor, left: silence)
+    expect(peak(output.left) == 0, "guard is bit-silent on silence")
+    expect(processor.guardStatus.snapshot() == .idle, "guard stays idle on silence")
+}
+
+do {
+    var guardedSettings = bareBoard(master: 0)
+    guardedSettings.limiter = false
+    guardedSettings.feedbackGuard = true
+    var plainSettings = guardedSettings
+    plainSettings.feedbackGuard = false
+
+    let note = guitarPluck(frequency: 196, amplitude: 0.3, seconds: 1.6)
+    let guardedProcessor = makeProcessor(guardedSettings)
+    let guarded = render(guardedProcessor, left: note)
+    let plain = render(makeProcessor(plainSettings), left: note)
+    let tailStart = Int(sampleRate * 0.6)
+    let guardedRMS = rms(Array(guarded.left[tailStart...]))
+    let plainRMS = rms(Array(plain.left[tailStart...]))
+    let status = guardedProcessor.guardStatus.snapshot()
+    print(String(format: "  • decaying note: guarded %.4f / plain %.4f, muted %@",
+                 guardedRMS, plainRMS, status.muted ? "yes" : "no"))
+    expectClose(guardedRMS / max(plainRMS, 1e-9), 1, 0.05, "guard leaves a decaying guitar note alone")
+    expect(!status.muted, "guard does not mute a decaying guitar note")
+}
+
+do {
+    // A sustained musical note is stationary and loud too. The guard must not
+    // mistake it for feedback just because the player holds a chord.
+    guard let preset = BuiltInPresets.all.first(where: { $0.name == "Enter Sandman" }) else {
+        expect(false, "Enter Sandman preset exists")
+        exit(1)
+    }
+    var guardedSettings = preset.settings
+    guardedSettings.feedbackGuard = true
+    var plainSettings = preset.settings
+    plainSettings.feedbackGuard = false
+
+    let fundamental = 196.0
+    let sustained = (0..<Int(sampleRate * 3.0)).map { index -> Double in
+        let time = Double(index) / sampleRate
+        var value = 0.0
+        for harmonic in 1...8 {
+            value += sin(2 * .pi * fundamental * Double(harmonic) * time) / Double(harmonic)
+        }
+        return value * 0.12
+    }
+    let guardedProcessor = makeProcessor(guardedSettings)
+    let guarded = render(guardedProcessor, left: sustained)
+    let plain = render(makeProcessor(plainSettings), left: sustained)
+    let tailStart = Int(sampleRate * 1.5)
+    let ratio = rms(Array(guarded.left[tailStart...])) / max(rms(Array(plain.left[tailStart...])), 1e-9)
+    let status = guardedProcessor.guardStatus.snapshot()
+    print(String(format: "  • sustained chord: %.2fx, muted %@", ratio, status.muted ? "yes" : "no"))
+    expect(ratio > 0.9, "guard leaves a sustained musical chord alone")
+    expect(!status.muted, "guard does not mute a sustained musical chord")
+}
+
+do {
+    var guardedSettings = bareBoard(master: 0)
+    guardedSettings.limiter = false
+    guardedSettings.feedbackGuard = true
+    var plainSettings = guardedSettings
+    plainSettings.feedbackGuard = false
+
+    let howl = growingTone(frequency: 1_500, from: 0.01, to: 0.8, seconds: 1.4)
+    let guardedProcessor = makeProcessor(guardedSettings)
+    let guarded = render(guardedProcessor, left: howl)
+    let plain = render(makeProcessor(plainSettings), left: howl)
+    let tailStart = Int(sampleRate * 1.0)
+    let guardedRMS = rms(Array(guarded.left[tailStart...]))
+    let plainRMS = rms(Array(plain.left[tailStart...]))
+    let status = guardedProcessor.guardStatus.snapshot()
+    print(String(format: "  • growing howl: guarded %.4f / plain %.4f, notches %d",
+                 guardedRMS, plainRMS, status.activeNotches))
+    expect(status.activeNotches > 0, "guard notches a growing feedback tone")
+    expect(guardedRMS < plainRMS * 0.5, "guard cuts a growing feedback tone")
+    expectFinite(guarded.left, "guarded feedback output is finite")
+}
+
+do {
+    var guardedSettings = bareBoard(master: 0)
+    guardedSettings.limiter = false
+    guardedSettings.feedbackGuard = true
+    var plainSettings = guardedSettings
+    plainSettings.feedbackGuard = false
+
+    let hum = (0..<Int(sampleRate * 1.6)).map { index -> Double in
+        let time = Double(index) / sampleRate
+        return 0.15 * sin(2 * .pi * 50 * time) + 0.05 * sin(2 * .pi * 150 * time)
+    }
+    let guardedProcessor = makeProcessor(guardedSettings)
+    let guarded = render(guardedProcessor, left: hum)
+    let plain = render(makeProcessor(plainSettings), left: hum)
+    let tailStart = Int(sampleRate * 1.0)
+    let guardedRMS = rms(Array(guarded.left[tailStart...]))
+    let plainRMS = rms(Array(plain.left[tailStart...]))
+    let status = guardedProcessor.guardStatus.snapshot()
+    print(String(format: "  • open-jack hum: guarded %.4f / plain %.4f, hum %@",
+                 guardedRMS, plainRMS, status.humDetected ? "yes" : "no"))
+    expect(status.humDetected, "guard detects open-input mains hum")
+    expect(guardedRMS < plainRMS * 0.6, "guard cuts open-input hum")
+}
+
+do {
+    // A low B (61.7 Hz) must survive the hum detector's narrow notches. The
+    // notch Q is high precisely so a musical note near the mains frequency is
+    // not gutted when the guard mistakes it for hum.
+    var guardedSettings = bareBoard(master: 0)
+    guardedSettings.limiter = false
+    guardedSettings.feedbackGuard = true
+    var plainSettings = guardedSettings
+    plainSettings.feedbackGuard = false
+
+    let lowB = guitarPluck(frequency: 61.74, amplitude: 0.25, seconds: 1.6)
+    let guarded = render(makeProcessor(guardedSettings), left: lowB)
+    let plain = render(makeProcessor(plainSettings), left: lowB)
+    let tailStart = Int(sampleRate * 0.6)
+    let ratio = rms(Array(guarded.left[tailStart...])) / max(rms(Array(plain.left[tailStart...])), 1e-9)
+    print(String(format: "  • low B next to mains: %.2fx", ratio))
+    expect(ratio > 0.8, "guard does not gut a note near the mains frequency")
+}
+
+
+print("▸ Acoustic feedback loop")
+do {
+    guard let preset = BuiltInPresets.all.first(where: { $0.name == "Modern Metal IR" }) else {
+        expect(false, "Modern Metal IR preset exists")
+        exit(1)
+    }
+    var guardedSettings = preset.settings
+    guardedSettings.feedbackGuard = true
+    var openSettings = preset.settings
+    openSettings.feedbackGuard = false
+
+    for gain in [0.05, 0.2] {
+        let open = renderAcousticLoop(
+            settings: openSettings, seconds: 6.0,
+            acousticGain: gain, delaySamples: 400
+        )
+        let guarded = renderAcousticLoop(
+            settings: guardedSettings, seconds: 6.0,
+            acousticGain: gain, delaySamples: 400
+        )
+        let tailStart = Int(48_000 * 4.0)
+        let openRMS = rms(Array(open.output[tailStart...]))
+        let guardedRMS = rms(Array(guarded.output[tailStart...]))
+        let status = guarded.processor.guardStatus.snapshot()
+        print(String(format: "  • loop gain %.2f: guarded %.4f / open %.4f, muted %@",
+                     gain, guardedRMS, openRMS, status.muted ? "yes" : "no"))
+        expect(openRMS > 0.02, "open loop howls at gain \(gain)")
+        expect(guardedRMS < 0.01, "guard kills the acoustic loop at gain \(gain)")
+        expect(status.muted, "guard reports the latched mute at gain \(gain)")
+    }
+}
+
 print("▸ Throughput")
 do {
     let preset = BuiltInPresets.all.first { $0.name == "Djent Tight" } ?? BuiltInPresets.all[0]
-    let processor = makeProcessor(preset.settings)
+    var throughputSettings = preset.settings
+    throughputSettings.feedbackGuard = false
+    let processor = makeProcessor(throughputSettings)
     let seconds = 5.0
     let count = Int(sampleRate * seconds)
     var input = [Double](repeating: 0, count: count)

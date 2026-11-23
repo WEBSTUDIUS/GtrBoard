@@ -310,6 +310,84 @@ public enum BuiltInPresets {
                 unit(.delay, ["time": 420, "feedback": 0.3, "mix": 0.22, "tone": 0.55, "mode": 0]),
                 unit(.reverb, ["size": 0.55, "damping": 0.4, "mix": 0.2, "predelay": 25, "mode": 1])
             ]
+        ),
+        rig(
+            name: "Enter Sandman IR",
+            gear: "Mesa Dual Rectifier · TS boost · Mesa OS 4x12 IR",
+            tags: ["metal", "hard-rock", "metallica", "ir"],
+            notes: "The Black Album rig with the Mesa OS 4x12 IR after the amp instead of the analogue cab. Same gate, boost and room as the original preset; the IR tightens the low end and adds real mic detail. Try the neck pickup for the clean intro.",
+            units: [
+                unit(.gate, ["threshold": -48, "decay": 140, "range": 65]),
+                unit(.boost, ["gain": 8, "tone": 0, "tight": 120]),
+                unit(.amp, ["voicing": 3, "gain": 28, "bass": 1, "mid": -1, "treble": 2, "presence": 5, "master": -12]),
+                unit(.ir, ["model": 2, "mix": 1, "lowCut": 90, "highCut": 7_000, "level": 0]),
+                unit(.reverb, ["size": 0.3, "damping": 0.6, "mix": 0.08, "predelay": 10, "mode": 0])
+            ]
+        ),
+        rig(
+            name: "Enter Sandman IR · EQ",
+            gear: "Mesa Dual Rectifier · TS boost · Mesa OS 4x12 IR · Black Album EQ",
+            tags: ["metal", "hard-rock", "metallica", "ir", "eq"],
+            notes: "Enter Sandman IR with the Black Album graphic-EQ pass: low mids scooped around 250–500 Hz, 4 kHz presence added and the 8–16 kHz fizz shaved off. A/B it with Enter Sandman IR to hear exactly what the EQ is doing.",
+            units: [
+                unit(.gate, ["threshold": -48, "decay": 140, "range": 65]),
+                unit(.boost, ["gain": 8, "tone": 0, "tight": 120]),
+                unit(.amp, ["voicing": 3, "gain": 28, "bass": 1, "mid": -1, "treble": 2, "presence": 5, "master": -12]),
+                unit(.ir, ["model": 2, "mix": 1, "lowCut": 90, "highCut": 7_000, "level": 0]),
+                unit(.reverb, ["size": 0.3, "damping": 0.6, "mix": 0.08, "predelay": 10, "mode": 0])
+            ],
+            eq: [0, 1, 0.5, -2.5, -3, -1.5, 1.5, 2, -2.5, -5]
+        ),
+        rig(
+            name: "Modern Metal IR",
+            gear: "TS-style boost → high-gain head → V30 4x12 IR (SM57)",
+            tags: ["metal", "rhythm", "ir"],
+            notes: "The first IR preset: a tight boost into a high-gain head and a close SM57 on a V30 4x12. Palm mutes stay tight because the IR low cut does the cleaning, not a shelf on the amp.",
+            units: [
+                unit(.gate, ["threshold": -50, "decay": 100, "range": 75]),
+                unit(.boost, ["gain": 10, "tone": 0, "tight": 120]),
+                unit(.amp, ["voicing": 3, "gain": 29, "bass": 1, "mid": -3, "treble": 3, "presence": 6, "master": -12]),
+                unit(.ir, ["model": 0, "mix": 1, "lowCut": 85, "highCut": 8_000, "level": 0])
+            ],
+            eq: [0, 0, -1, 0, -2, -1, 0, 1, 0, 0]
+        ),
+        rig(
+            name: "Djent IR",
+            gear: "Tight boost → 5150-style head → Djent low-cut IR",
+            tags: ["metal", "djent", "progressive", "ir"],
+            notes: "Maximum string separation: a hard gate, a 160 Hz boost tightener, 33 dB of gain and the Djent low-cut IR. The 110 Hz IR low cut is what keeps the low string from turning into mud.",
+            units: [
+                unit(.gate, ["threshold": -45, "decay": 70, "range": 80]),
+                unit(.boost, ["gain": 14, "tone": 0, "tight": 160]),
+                unit(.amp, ["voicing": 3, "gain": 33, "bass": 0, "mid": -4, "treble": 3, "presence": 7, "master": -14]),
+                unit(.ir, ["model": 10, "mix": 1, "lowCut": 110, "highCut": 9_000, "level": 0])
+            ],
+            eq: [2, 1, 0, -2, -1, 0, 1, 0, 0, 0]
+        ),
+        rig(
+            name: "Swedish Chainsaw IR",
+            gear: "Hard-clip distortion → high-gain head → Fredman 57/57 IR",
+            tags: ["metal", "death", "chainsaw", "ir"],
+            notes: "The Swedish death-metal recipe: a hard-clipping pedal in front of an already angry head, through the Fredman 57/57 cab with its 1.1 kHz bite. Scoop the amp, not the pedal.",
+            units: [
+                unit(.distortion, ["gain": 30, "tone": 0.55, "level": -10, "edge": 0.75]),
+                unit(.amp, ["voicing": 3, "gain": 28, "bass": 1, "mid": -1, "treble": 2, "presence": 4, "master": -13]),
+                unit(.ir, ["model": 9, "mix": 1, "lowCut": 90, "highCut": 7_000, "level": 0])
+            ],
+            eq: [0, 1, 0, 0, 1, 0, 2, 1, 0, 0]
+        ),
+        rig(
+            name: "Doom Wall IR",
+            gear: "Big Muff → cooking amp → Orange PPC412 IR",
+            tags: ["metal", "doom", "sludge", "ir"],
+            notes: "Slow, thick and ugly: a Muff with the sustain up, a dark cooking amp and the Orange PPC IR. Tune down, play slow, let the room in.",
+            units: [
+                unit(.fuzz, ["sustain": 0.85, "tone": 0.4, "level": -10, "bias": 0.55]),
+                unit(.amp, ["voicing": 2, "gain": 24, "bass": 3, "mid": 1, "treble": 0, "presence": 3, "master": -12]),
+                unit(.ir, ["model": 7, "mix": 1, "lowCut": 55, "highCut": 5_500, "level": 0]),
+                unit(.reverb, ["size": 0.5, "damping": 0.5, "mix": 0.12, "predelay": 20, "mode": 1])
+            ],
+            eq: [1, 1, 0, 0, -1, 0, -1, 0, 0, 0]
         )
     ])
 
@@ -343,7 +421,13 @@ public enum BuiltInPresets {
         "Garage Rock": 5.0,
         "Ain't Talkin' 'Bout Love": -0.5,
         "Whole Lotta Love": -3.0,
-        "Modern Lead": -3.5
+        "Modern Lead": -3.5,
+        "Enter Sandman IR": -10.1,
+        "Enter Sandman IR · EQ": -10.3,
+        "Modern Metal IR": -11.5,
+        "Djent IR": 0.0,
+        "Swedish Chainsaw IR": -6.3,
+        "Doom Wall IR": -10.2
     ]
 
     /// Applies the calibration table to the factory catalogue.

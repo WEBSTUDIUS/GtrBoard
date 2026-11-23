@@ -98,6 +98,11 @@ final class AppModel: ObservableObject {
 
     @Published var toast: String?
 
+    /// Live feedback/open-input suppression state from the renderer.
+    @Published private(set) var guardStatus: FeedbackGuardStatus = .idle
+    /// File name of the imported user IR, if any.
+    @Published private(set) var customIRName: String?
+
     /// Whether the user wants audio running. Persisted across launches.
     @Published private(set) var isEnabled: Bool
 
@@ -137,6 +142,7 @@ final class AppModel: ObservableObject {
         static let bankB = "gtrboard.bankB.v1"
         static let activeBank = "gtrboard.activeBank.v1"
         static let recordBitDepth = "gtrboard.recordBitDepth"
+        static let customIR = "gtrboard.customIR"
     }
 
     // MARK: - Init
@@ -174,6 +180,14 @@ final class AppModel: ObservableObject {
         let storedDepth = defaults.object(forKey: Keys.recordBitDepth) as? Int ?? 24
         recordingBitDepth = storedDepth == 32 ? 32 : 24
         isEnabled = defaults.bool(forKey: Keys.enabled)
+
+        if let storedIR = defaults.string(forKey: Keys.customIR) {
+            let url = AppModel.impulseResponseDirectory.appendingPathComponent(storedIR)
+            if let file = try? ImpulseResponseFile.load(url: url) {
+                customIRName = storedIR
+                engine.setCustomImpulseResponse(samples: file.samples, sampleRate: file.sampleRate)
+            }
+        }
 
         let ins = AudioDevices.inputs()
         let outs = AudioDevices.outputs()
@@ -460,6 +474,13 @@ final class AppModel: ObservableObject {
 
     func setUnitEnabled(_ kind: FXKind, _ enabled: Bool) {
         settings.setEnabled(enabled, for: kind)
+        // Two speaker sims in series sound like a blanket over the amp. When
+        // the IR pedal is switched on by hand, retire the analogue cabinet;
+        // presets may still enable both deliberately.
+        if kind == .ir, enabled, settings.unit(.cabinet)?.enabled == true {
+            settings.setEnabled(false, for: .cabinet)
+            showToast("Cabinet bypassed · IR is the speaker now")
+        }
     }
 
     func setParameter(_ kind: FXKind, _ parameter: String, _ value: Double) {
@@ -510,6 +531,17 @@ final class AppModel: ObservableObject {
         settings.limiter = enabled
     }
 
+    /// Turns the automatic feedback / open-jack suppressor on or off.
+    func setFeedbackGuard(_ enabled: Bool) {
+        settings.feedbackGuard = enabled
+    }
+
+    /// Re-arms the guard after it latched the input off to stop a howl.
+    func resetFeedbackMute() {
+        engine.processor.requestFeedbackMuteReset()
+        showToast("Feedback guard re-armed")
+    }
+
     func setGraphicGain(_ index: Int, _ value: Double) {
         guard settings.graphicEQ.gains.indices.contains(index) else { return }
         settings.graphicEQ.gains[index] = value.clamped(to: GraphicEQSettings.range)
@@ -529,6 +561,72 @@ final class AppModel: ObservableObject {
         var unit = FXUnit(kind: kind, enabled: settings.units[index].enabled)
         unit.enabled = settings.units[index].enabled
         settings.units[index] = unit
+    }
+
+    // MARK: - Impulse responses
+
+    /// Application Support folder for imported IRs.
+    static var impulseResponseDirectory: URL {
+        let support = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first
+            ?? FileManager.default.homeDirectoryForCurrentUser
+                .appendingPathComponent("Library/Application Support")
+        return support.appendingPathComponent("GtrBoard/IRs", isDirectory: true)
+    }
+
+    /// Imports a WAV impulse response, enables the IR pedal and turns the
+    /// analogue cabinet off so the two do not stack.
+    func importImpulseResponse() {
+        let panel = NSOpenPanel()
+        panel.title = "Import Cabinet IR"
+        panel.message = "Choose a WAV impulse response (mono or stereo, PCM or float)."
+        panel.allowedContentTypes = [UTType(filenameExtension: "wav") ?? .audio]
+        panel.allowsMultipleSelection = false
+        panel.canChooseDirectories = false
+
+        guard panel.runModal() == .OK, let url = panel.url else { return }
+
+        do {
+            let file = try ImpulseResponseFile.load(url: url)
+            guard !file.samples.isEmpty,
+                  file.samples.contains(where: { abs($0) > 1e-5 }) else {
+                throw ImpulseResponseError.empty
+            }
+
+            let directory = AppModel.impulseResponseDirectory
+            try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+            let base = Preset.slug(from: url.deletingPathExtension().lastPathComponent)
+            let destination = directory.appendingPathComponent("IR-\(base).wav")
+            if destination.standardizedFileURL != url.standardizedFileURL {
+                if FileManager.default.fileExists(atPath: destination.path) {
+                    try FileManager.default.removeItem(at: destination)
+                }
+                try FileManager.default.copyItem(at: url, to: destination)
+            }
+
+            customIRName = destination.lastPathComponent
+            UserDefaults.standard.set(customIRName, forKey: Keys.customIR)
+            engine.setCustomImpulseResponse(samples: file.samples, sampleRate: file.sampleRate)
+
+            settings.setParam(Double(CabinetIRLibrary.customIndex), for: .ir, parameter: "model")
+            settings.setEnabled(true, for: .ir)
+            settings.setEnabled(false, for: .cabinet)
+            restartAudioIfNeeded()
+
+            showToast(String(
+                format: "IR loaded: %@ · %.0f ms",
+                url.lastPathComponent,
+                file.duration * 1_000
+            ))
+        } catch {
+            showToast(error.localizedDescription)
+        }
+    }
+
+    /// Reveals the imported-IR folder in Finder.
+    func revealImpulseResponseFolder() {
+        let directory = AppModel.impulseResponseDirectory
+        try? FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        NSWorkspace.shared.activateFileViewerSelecting([directory])
     }
 
     // MARK: - Presets
@@ -832,6 +930,14 @@ final class AppModel: ObservableObject {
                 let peaks = self.engine.processor.levels.snapshot()
                 self.meter.input = max(peaks.input, self.meter.input * 0.82)
                 self.meter.output = max(peaks.output, self.meter.output * 0.82)
+                let guardStatus = self.engine.processor.guardStatus.snapshot()
+                if guardStatus != self.guardStatus {
+                    let wasMuted = self.guardStatus.muted
+                    self.guardStatus = guardStatus
+                    if guardStatus.muted, !wasMuted {
+                        self.showToast("Feedback muted · headphones or an interface will fix it")
+                    }
+                }
             }
         }
         RunLoop.main.add(timer, forMode: .common)
