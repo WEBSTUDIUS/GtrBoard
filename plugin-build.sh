@@ -29,6 +29,10 @@ pkill -f "GtrBoard Plugin Host" 2>/dev/null || true
 sleep 1
 rm -rf "$DEST"
 ditto "$APP" "$DEST"
+# Drop the build-product registration so only the installed copy is visible.
+pluginkit -r "$PWD/$APP/Contents/PlugIns/GtrBoardAU.appex" 2>/dev/null || true
+"$LSREGISTER" -u "$PWD/$APP" 2>/dev/null || true
+
 "$LSREGISTER" -f "$DEST"
 open "$DEST"
 sleep 3
