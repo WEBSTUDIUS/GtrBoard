@@ -8,3 +8,6 @@ dist/
 .spm-config/
 .DS_Store
 *.log
+.build-plugin/
+GtrBoardPlugin.xcodeproj/
+*.xcuserdatad

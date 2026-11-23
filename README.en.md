@@ -44,6 +44,7 @@ preset crossfades and a menu-bar controller.
 - [🤖 AI presets](#ai-presets)
 - [Recording and DAW](#record)
 - [Build](#build)
+- [DAW plug-in (AUv3)](#plugin)
 - [Architecture](#architecture)
 - [Tests](#tests)
 - [Troubleshooting](#trouble)
@@ -503,6 +504,32 @@ open dist/GtrBoard.app
 > macros are declared but the `SwiftUIMacros` plugin is not shipped with CLT.
 > `build.sh` automatically uses the 26.5 SDK when it exists; override with
 > `GTRBOARD_SDK=/path/to/MacOSX.sdk ./build.sh`.
+
+## <a id="plugin"></a>DAW plug-in (AUv3)
+
+GtrBoard also builds as an **AUv3 effect** for Logic and GarageBand, using the
+same `BoardCore` engine, the same board and the same sound as the standalone
+app.
+
+```bash
+brew install xcodegen   # once
+./plugin-build.sh       # build the extension + host, install into /Applications
+```
+
+The script builds `GtrBoard Plugin Host.app`, installs it into `/Applications`,
+registers the AUv3 and runs `auval`. Then, in the DAW:
+
+**Audio FX → Audio Units → Andrey Ilin → GtrBoard**
+
+The plug-in window is the full board: 15 pedals, graphic EQ, master, limiter,
+bypass and feedback guard. Every knob is exposed as a host parameter for
+automation, and the board is saved with the project. Presets live in the
+plug-in header.
+
+Limitations: full Xcode and `xcodegen` are required; the build is ad-hoc and
+arm64. Custom WAV IRs can only be imported in the standalone app — the AU
+cannot rebuild its convolution kernels while the host is rendering. See
+[`Plugin/README.md`](Plugin/README.md).
 
 ## <a id="architecture"></a>Architecture
 

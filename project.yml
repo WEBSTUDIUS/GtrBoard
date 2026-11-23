@@ -1,0 +1,69 @@
+name: GtrBoardPlugin
+
+options:
+  bundleIdPrefix: com.andreyilin.gtrboard
+  deploymentTarget:
+    macOS: "14.0"
+  createIntermediateGroups: true
+
+settings:
+  base:
+    SWIFT_VERSION: "5.0"
+    MACOSX_DEPLOYMENT_TARGET: "14.0"
+    CODE_SIGN_IDENTITY: "-"
+    CODE_SIGN_STYLE: Manual
+    DEVELOPMENT_TEAM: ""
+    ENABLE_HARDENED_RUNTIME: NO
+    ENABLE_USER_SCRIPT_SANDBOXING: NO
+    ENABLE_APP_SANDBOX: YES
+
+targets:
+  GtrBoardPluginHost:
+    type: application
+    platform: macOS
+    sources:
+      - path: Plugin/Host
+    settings:
+      base:
+        INFOPLIST_FILE: Plugin/Host/Info.plist
+        PRODUCT_BUNDLE_IDENTIFIER: com.andreyilin.gtrboard.pluginhost
+        PRODUCT_NAME: GtrBoard Plugin Host
+        ENABLE_APP_SANDBOX: NO
+        ASSETCATALOG_COMPILER_APPICON_NAME: ""
+        LD_RUNPATH_SEARCH_PATHS: "$(inherited) @executable_path/../Frameworks"
+    dependencies:
+      - target: GtrBoardAU
+        embed: true
+
+  BoardCore:
+    type: framework
+    platform: macOS
+    sources:
+      - path: Sources/BoardCore
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.andreyilin.gtrboard.boardcore
+        PRODUCT_NAME: BoardCore
+        DEFINES_MODULE: YES
+        SKIP_INSTALL: YES
+        GENERATE_INFOPLIST_FILE: YES
+        APPLICATION_EXTENSION_API_ONLY: YES
+
+  GtrBoardAU:
+    type: app-extension
+    platform: macOS
+    sources:
+      - path: Plugin/AU
+      - path: Sources/GtrBoard/UI/Theme.swift
+      - path: Sources/GtrBoard/UI/PedalComponents.swift
+    dependencies:
+      - target: BoardCore
+        embed: true
+    settings:
+      base:
+        INFOPLIST_FILE: Plugin/AU/Info.plist
+        PRODUCT_BUNDLE_IDENTIFIER: com.andreyilin.gtrboard.pluginhost.au
+        PRODUCT_NAME: GtrBoardAU
+        SKIP_INSTALL: YES
+        APPLICATION_EXTENSION_API_ONLY: YES
+        LD_RUNPATH_SEARCH_PATHS: "$(inherited) @executable_path/../Frameworks @loader_path/../Frameworks"

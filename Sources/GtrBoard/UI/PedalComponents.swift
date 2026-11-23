@@ -221,6 +221,9 @@ struct PedalCard: View {
     /// Extra actions for the IR pedal; nil for every other pedal.
     var onImportIR: (() -> Void)? = nil
     var customIRName: String? = nil
+    /// The AUv3 has no safe way to rebuild its convolution kernels while the
+    /// host is rendering, so its IR menu only lists the built-in cabs.
+    var allowsCustomIR: Bool = true
 
     @State private var hovering = false
 
@@ -297,8 +300,11 @@ struct PedalCard: View {
     /// Cabinet selector for the IR pedal. Built-in cabs, the custom WAV slot
     /// and the import action live in one menu so the card stays compact.
     private var irModelSelector: some View {
-        let choices = descriptor.parameter("model")?.choices ?? []
+        let allChoices = descriptor.parameter("model")?.choices ?? []
         let current = Int(unit.value("model").rounded())
+        let choices: [String] = allowsCustomIR
+            ? allChoices
+            : Array(allChoices.prefix(CabinetIRLibrary.models.count))
         let isCustom = current == CabinetIRLibrary.customIndex
         let label: String = {
             if isCustom, let customIRName {
@@ -312,7 +318,7 @@ struct PedalCard: View {
                 Button {
                     // Picking the custom slot without an imported file opens
                     // the importer instead of silently falling back.
-                    if index == CabinetIRLibrary.customIndex, customIRName == nil {
+                    if index == CabinetIRLibrary.customIndex, customIRName == nil, allowsCustomIR {
                         onImportIR?()
                     } else {
                         onParameter("model", Double(index))
@@ -325,14 +331,16 @@ struct PedalCard: View {
                     }
                 }
             }
-            Divider()
-            Button {
-                onImportIR?()
-            } label: {
-                Label("Import WAV…", systemImage: "square.and.arrow.down")
-            }
-            if customIRName != nil {
-                Text("Custom slot: \(customIRName!)")
+            if allowsCustomIR {
+                Divider()
+                Button {
+                    onImportIR?()
+                } label: {
+                    Label("Import WAV…", systemImage: "square.and.arrow.down")
+                }
+                if let customIRName {
+                    Text("Custom slot: \(customIRName)")
+                }
             }
         } label: {
             HStack(spacing: 5) {

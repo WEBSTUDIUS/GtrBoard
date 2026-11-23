@@ -44,6 +44,7 @@ A/B-банки, кроссфейд между пресетами и меню-б�
 - [🤖 Пресеты с помощью ИИ](#ai-presets)
 - [Запись и DAW](#record)
 - [Сборка](#build)
+- [Плагин в DAW (AUv3)](#plugin)
 - [Архитектура](#architecture)
 - [Тесты](#tests)
 - [Если что-то не так](#trouble)
@@ -508,6 +509,31 @@ open dist/GtrBoard.app
 > объявлены, но плагин `SwiftUIMacros` в CLT не поставляется. `build.sh`
 > автоматически собирает с SDK 26.5, если он есть; переопределить можно через
 > `GTRBOARD_SDK=/path/to/MacOSX.sdk ./build.sh`.
+
+## <a id="plugin"></a>Плагин в DAW (AUv3)
+
+GtrBoard собирается и как **AUv3-эффект** для Logic и GarageBand — с тем же
+движком `BoardCore`, тем же бордом и тем же звуком, что и standalone.
+
+```bash
+brew install xcodegen   # один раз
+./plugin-build.sh       # собрать extension + host, поставить в /Applications
+```
+
+Скрипт собирает `GtrBoard Plugin Host.app`, кладёт его в `/Applications`,
+регистрирует AUv3 и прогоняет `auval`. Дальше в DAW:
+
+**Audio FX → Audio Units → Andrey Ilin → GtrBoard**
+
+В окне плагина — весь борд: 15 педалей, графический EQ, master, limiter,
+bypass и feedback guard. Все ручки проброшены в параметры хоста для
+автоматизации, состояние борда сохраняется вместе с проектом. Пресеты
+выбираются в шапке плагина.
+
+Ограничения: нужен полный Xcode и `xcodegen`; сборка ad-hoc и arm64. Свой WAV
+для IR-кабинета импортируется только в standalone-приложении — AU не может
+пересобрать свёртку во время рендера хоста. Подробности:
+[`Plugin/README.md`](Plugin/README.md).
 
 ## <a id="architecture"></a>Архитектура
 
