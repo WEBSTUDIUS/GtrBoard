@@ -194,24 +194,19 @@ its order; **Reset chain** restores the factory order.
 - **Limiter** — transparent look-ahead ~1.5 ms, always in the path, so changing
   its state does not change latency or click.
 
-### Enter Sandman: two versions
+### Enter Sandman: Black Album rhythm
 
-Both use the Mesa OS · SM57 IR with the same gate, boost, Recto-style high gain,
-90/7 kHz low/high cut and short room:
+Both IR versions use a dry Mark II C++-inspired high-gain voice, a mild
+boost and a synthesised 1960 · V30 IR with 80 Hz and 6.4 kHz cuts.
+**Enter Sandman IR · EQ** adds a broad scoop around 750 Hz, brings out
+pick attack at 2–4 kHz and rolls off the top-end fizz. **Enter Sandman IR**
+keeps the graphic EQ flat for A/B comparison.
 
-| Preset | EQ | What it is for |
-|---|---|---|
-| **Enter Sandman IR** | graphic EQ flat | an honest IR rig with no extra colour |
-| **Enter Sandman IR · EQ** | Black Album curve | closer to the album rhythm tone; A/B it with the first one |
-
-The second version's curve: `31.5` 0, `63` +1, `125` +0.5, `250` −2.5,
-`500` −3, `1k` −1.5, `2k` +1.5, `4k` +2, `8k` −2.5, `16k` −5 dB. Low mids are
-scooped, presence is added and the fizz is shaved off. Both presets are
-level-calibrated, so switching does not jump in volume.
-
-This is an approximation, not a clone: the amp and cab are original models, the
-IR is synthesised, and the album tone is double-tracked and mixed. For a closer
-match, import your own Mesa IR through **Import WAV…**.
+Start with a bridge humbucker in standard tuning. The preset captures the
+character of a single rhythm track. Separately played takes, multiple amps
+and microphone positions contribute to the weight of the record.
+[James Hetfield interview](https://www.guitarworld.com/features/metallica-the-black-album) ·
+[Bob Rock and engineer Randy Staub on the recording](https://www.mixonline.com/recording/classic-tracks-metallicas-enter-sandman-366232)
 
 ## <a id="feedback-guard"></a>Feedback guard
 
@@ -256,8 +251,8 @@ pedals, EQ, master volume, output trim, limiter, feedback guard and bypass.
 | Comfortably Numb | Big Muff → Electric Mistress → Hiwatt + delay | lead, floyd |
 | Smells Like Teen Spirit | DS-1 → clean Fender + chorus | alternative, grunge |
 | Master of Puppets | TS boost → Mark-style high gain, gate | metal, thrash |
-| Enter Sandman | Recto-style high gain, gate, room | metal |
-| Enter Sandman IR | the same Recto rig through the Mesa OS 4×12 IR | metal, metallica, ir |
+| Enter Sandman | Mark-inspired high gain and analog cabinet | metal |
+| Enter Sandman IR | Mark-inspired high gain → 1960 V30 IR | metal, metallica, ir |
 | Enter Sandman IR · EQ | the same IR rig plus the Black Album EQ curve | metal, metallica, ir, eq |
 | Killing in the Name | cranked JCM800, drop D | metal, rap-rock |
 | Seven Nation Army | Big Muff + dark clean | fuzz, riff |
@@ -286,8 +281,8 @@ pedals, EQ, master volume, output trim, limiter, feedback guard and bypass.
 
 </details>
 
-Factory rigs are **loudness-calibrated**: RMS spread is about 1 dB, so
-“Studio Clean → Enter Sandman” does not jump. Calibration lives in
+Factory rigs are **loudness-calibrated**: levels are compared on a single note,
+a power chord and repeated palm mutes. Calibration lives in
 `outputTrim` — the **PRESET** slider in the footer. Double-click its value for
 0 dB.
 

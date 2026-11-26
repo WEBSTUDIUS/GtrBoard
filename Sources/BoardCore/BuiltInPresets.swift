@@ -153,16 +153,10 @@ public enum BuiltInPresets {
         ),
         rig(
             name: "Enter Sandman",
-            gear: "Mesa Dual Rectifier · TS boost · room",
+            gear: "Mark-inspired high gain · analog 4×12",
             tags: ["metal", "hard-rock", "metallica"],
-            notes: "Big, scooped Recto chunk with a boost to tighten the low end and a small room so the chugs do not sound dry.",
-            units: [
-                unit(.gate, ["threshold": -48, "decay": 140, "range": 65]),
-                unit(.boost, ["gain": 8, "tone": 0, "tight": 120]),
-                unit(.amp, ["voicing": 3, "gain": 28, "bass": 1, "mid": -1, "treble": 2, "presence": 5, "master": -12]),
-                unit(.cabinet, ["lowCut": 90, "highCut": 5_200, "resonance": 5]),
-                unit(.reverb, ["size": 0.3, "damping": 0.6, "mix": 0.08, "predelay": 10, "mode": 0])
-            ]
+            notes: "Dry Black Album rhythm with a tight pick attack and enough midrange for power chords to hold together. Try the bridge humbucker in standard tuning.",
+            units: sandmanRhythm(cabinet: unit(.cabinet, ["lowCut": 80, "highCut": 5_500, "resonance": 4]))
         ),
         rig(
             name: "Killing in the Name",
@@ -313,30 +307,18 @@ public enum BuiltInPresets {
         ),
         rig(
             name: "Enter Sandman IR",
-            gear: "Mesa Dual Rectifier · TS boost · Mesa OS 4x12 IR",
+            gear: "Mark-inspired high gain → 1960 V30 IR",
             tags: ["metal", "hard-rock", "metallica", "ir"],
-            notes: "The Black Album rig with the Mesa OS 4x12 IR after the amp instead of the analogue cab. Same gate, boost and room as the original preset; the IR tightens the low end and adds real mic detail. Try the neck pickup for the clean intro.",
-            units: [
-                unit(.gate, ["threshold": -48, "decay": 140, "range": 65]),
-                unit(.boost, ["gain": 8, "tone": 0, "tight": 120]),
-                unit(.amp, ["voicing": 3, "gain": 28, "bass": 1, "mid": -1, "treble": 2, "presence": 5, "master": -12]),
-                unit(.ir, ["model": 2, "mix": 1, "lowCut": 90, "highCut": 7_000, "level": 0]),
-                unit(.reverb, ["size": 0.3, "damping": 0.6, "mix": 0.08, "predelay": 10, "mode": 0])
-            ]
+            notes: "Dry Black Album rhythm voiced for a bridge humbucker. A restrained boost and a British 4×12 keep the low strings tight and the pick attack clear.",
+            units: sandmanRhythm(cabinet: sandmanIR)
         ),
         rig(
             name: "Enter Sandman IR · EQ",
-            gear: "Mesa Dual Rectifier · TS boost · Mesa OS 4x12 IR · Black Album EQ",
+            gear: "Mark-inspired high gain → 1960 V30 IR · graphic EQ",
             tags: ["metal", "hard-rock", "metallica", "ir", "eq"],
-            notes: "Enter Sandman IR with the Black Album graphic-EQ pass: low mids scooped around 250–500 Hz, 4 kHz presence added and the 8–16 kHz fizz shaved off. A/B it with Enter Sandman IR to hear exactly what the EQ is doing.",
-            units: [
-                unit(.gate, ["threshold": -48, "decay": 140, "range": 65]),
-                unit(.boost, ["gain": 8, "tone": 0, "tight": 120]),
-                unit(.amp, ["voicing": 3, "gain": 28, "bass": 1, "mid": -1, "treble": 2, "presence": 5, "master": -12]),
-                unit(.ir, ["model": 2, "mix": 1, "lowCut": 90, "highCut": 7_000, "level": 0]),
-                unit(.reverb, ["size": 0.3, "damping": 0.6, "mix": 0.08, "predelay": 10, "mode": 0])
-            ],
-            eq: [0, 1, 0.5, -2.5, -3, -1.5, 1.5, 2, -2.5, -5]
+            notes: "The same rhythm rig with a broad 750 Hz scoop, extra upper-mid attack and less top-end fizz. Use the flat IR version for a level-matched A/B.",
+            units: sandmanRhythm(cabinet: sandmanIR),
+            eq: [0, 0, 1, 0, -2, -3, 1, 1.5, -3, -5]
         ),
         rig(
             name: "Modern Metal IR",
@@ -489,6 +471,19 @@ public enum BuiltInPresets {
         )
     ])
 
+    private static var sandmanIR: FXUnit {
+        unit(.ir, ["model": 4, "mix": 1, "lowCut": 80, "highCut": 6_400, "level": 0])
+    }
+
+    private static func sandmanRhythm(cabinet: FXUnit) -> [FXUnit] {
+        [
+            unit(.gate, ["threshold": -54, "decay": 145, "range": 65]),
+            unit(.boost, ["gain": 2, "tone": 0, "tight": 105]),
+            unit(.amp, ["voicing": 3, "gain": 23, "bass": 0.5, "mid": 0.5, "treble": 2, "presence": 3.5, "master": -12]),
+            cabinet
+        ]
+    }
+
     /// Factory loudness calibration.
     ///
     /// Each rig is matched to Studio Clean on a single note, a power chord
@@ -508,7 +503,7 @@ public enum BuiltInPresets {
         "Comfortably Numb": -2.0,
         "Smells Like Teen Spirit": 14.0,
         "Master of Puppets": -2.3,
-        "Enter Sandman": -3.0,
+        "Enter Sandman": -2.1,
         "Killing in the Name": -0.7,
         "Seven Nation Army": 8.9,
         "Streets Have No Name": 22.0,
@@ -521,8 +516,8 @@ public enum BuiltInPresets {
         "Ain't Talkin' 'Bout Love": -0.7,
         "Whole Lotta Love": -2.5,
         "Modern Lead": -2.7,
-        "Enter Sandman IR": -6.9,
-        "Enter Sandman IR · EQ": -6.5,
+        "Enter Sandman IR": -9.9,
+        "Enter Sandman IR · EQ": -10.3,
         "Modern Metal IR": -8.3,
         "Djent IR": -2.6,
         "Swedish Chainsaw IR": -6.5,

@@ -196,24 +196,19 @@ Speakers/Phones ←───┘
 - **Limiter** — прозрачный look-ahead ~1.5 мс, всегда в цепи, поэтому его
   включение/выключение не меняет задержку и не щёлкает.
 
-### Enter Sandman: две версии
+### Enter Sandman: ритм Black Album
 
-Обе версии используют Mesa OS · SM57 IR, один и тот же гейт, буст, Recto-подобный
-High Gain, low/high cut 90/7 кГц и короткий рум:
+Обе IR-версии используют сухой high gain в духе Mesa/Boogie Mark II C++,
+лёгкий буст и синтезированный 1960 · V30 IR со срезами 80 Гц и 6,4 кГц.
+**Enter Sandman IR · EQ** добавляет широкий провал около 750 Гц,
+подчёркивает атаку в области 2–4 кГц и приглушает верхний песок.
+**Enter Sandman IR** оставляет графический EQ плоским для сравнения A/B.
 
-| Пресет | Эквализация | Для чего |
-|---|---|---|
-| **Enter Sandman IR** | графический EQ плоский | честный IR-риг без дополнительной окраски |
-| **Enter Sandman IR · EQ** | блэкальбомная кривая | ближе к ритм-тону с альбома; A/B с первой версией |
-
-Кривая второй версии: `31.5` 0, `63` +1, `125` +0.5, `250` −2.5, `500` −3,
-`1k` −1.5, `2k` +1.5, `4k` +2, `8k` −2.5, `16k` −5 дБ. Низкая середина
-вычищена, presence добавлен, песок срезан. Уровни обеих версий откалиброваны
-до общего RMS, поэтому переключение не прыгает по громкости.
-
-Это приближение, а не клон: усилитель и кабинет в GtrBoard свои, IR
-синтезирован, а альбомный тон — это ещё и дабл-трек со студийной обработкой.
-Для более точного попадания импортируйте свой Mesa IR через **Import WAV…**.
+Начните с бриджевого хамбакера в стандартном строе. Пресет передаёт
+характер одной ритм-дорожки. Плотность альбомного ритма складывается
+из отдельных дублей, нескольких усилителей и микрофонов.
+[Интервью Джеймса Хэтфилда](https://www.guitarworld.com/features/metallica-the-black-album) ·
+[Боб Рок и звукорежиссёр Рэнди Стауб о записи](https://www.mixonline.com/recording/classic-tracks-metallicas-enter-sandman-366232)
 
 ## <a id="feedback-guard"></a>Подавитель обратной связи
 
@@ -259,8 +254,8 @@ master volume, output trim, limiter и bypass.
 | Comfortably Numb | Big Muff → Electric Mistress → Hiwatt + дилей | lead, floyd |
 | Smells Like Teen Spirit | DS-1 → чистый Fender + chorus | alternative, grunge |
 | Master of Puppets | TS-буст → Mark-подобный high gain, гейт | metal, thrash |
-| Enter Sandman | Recto-подобный high gain, гейт, рум | metal |
-| Enter Sandman IR | тот же Recto-риг через Mesa OS 4×12 IR | metal, metallica, ir |
+| Enter Sandman | Mark-подобный high gain и аналоговый кабинет | metal |
+| Enter Sandman IR | Mark-подобный high gain → 1960 V30 IR | metal, metallica, ir |
 | Enter Sandman IR · EQ | тот же IR-риг + блэкальбомная EQ-кривая | metal, metallica, ir, eq |
 | Killing in the Name | JCM800 на громкости, drop D | metal, rap-rock |
 | Seven Nation Army | Big Muff + тёмный чистый | fuzz, riff |
@@ -289,8 +284,8 @@ master volume, output trim, limiter и bypass.
 
 </details>
 
-Заводские пресеты **откалиброваны по громкости**: разброс RMS около 1 дБ,
-поэтому «Studio Clean → Enter Sandman» не выстреливает. Калибровка живёт в
+Заводские пресеты **откалиброваны по громкости**: уровни сравниваются на ноте,
+пауэр-аккорде и приглушённых ударах. Калибровка живёт в
 `outputTrim` — ползунок **PRESET** в футере. Двойной клик по значению — 0 дБ.
 
 ### Пресеты в репозитории

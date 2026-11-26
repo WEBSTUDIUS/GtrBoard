@@ -8,6 +8,10 @@ on:
 permissions:
   contents: write
 
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   release:
     name: Build, test and publish
@@ -45,7 +49,23 @@ jobs:
           set -euo pipefail
           VERSION="${GITHUB_REF_NAME#v}"
           ZIP="dist/GtrBoard-${VERSION}.zip"
-          gh release create "${GITHUB_REF_NAME}" \
-            "$ZIP" "$ZIP.sha256" \
-            --title "GtrBoard ${VERSION}" \
-            --notes-file .github/release-notes.md
+          REF="refs/tags/${GITHUB_REF_NAME}"
+          REMOTE_COMMIT="$(git ls-remote origin "$REF" "${REF}^{}" |
+            awk '$2 ~ /\^\{\}$/ { peeled = $1 } { sha = $1 } END { print (peeled ? peeled : sha) }')"
+          if [[ "$REMOTE_COMMIT" != "$(git rev-parse HEAD)" ]]; then
+            echo "Tag moved during the build. Skipping publication."
+            exit 0
+          fi
+
+          if gh release view "${GITHUB_REF_NAME}" >/dev/null 2>&1; then
+            gh release upload "${GITHUB_REF_NAME}" "$ZIP" "$ZIP.sha256" --clobber
+            gh release edit "${GITHUB_REF_NAME}" \
+              --title "GtrBoard ${VERSION}" \
+              --notes-file .github/release-notes.md
+          else
+            gh release create "${GITHUB_REF_NAME}" \
+              "$ZIP" "$ZIP.sha256" \
+              --verify-tag \
+              --title "GtrBoard ${VERSION}" \
+              --notes-file .github/release-notes.md
+          fi
