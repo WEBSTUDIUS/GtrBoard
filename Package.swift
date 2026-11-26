@@ -22,7 +22,8 @@ let package = Package(
     targets: [
         .target(
             name: "BoardCore",
-            path: "Sources/BoardCore"
+            path: "Sources/BoardCore",
+            resources: [.copy("IRs")]
         ),
         .executableTarget(
             name: "GtrBoard",

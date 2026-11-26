@@ -1,16 +1,8 @@
 //  CabinetIRLibrary.swift
 //  BoardCore
 //
-//  Built-in speaker impulse responses. Every cabinet is synthesised from the
-//  same physical sketch — a close mic, a few strong early reflections, the
-//  low resonance of the cone, the presence lift of the dust cap and a short
-//  diffused tail — with its own frequencies, decays and microphone distance.
-//
-//  Generating the IRs instead of shipping WAV files keeps the app small,
-//  makes the library identical on every machine and avoids redistributing
-//  third-party cabinet captures. The set leans deliberately towards modern
-//  metal: tight low end, aggressive upper mids and a choice between scooped
-//  and mid-forward voicings.
+//  Built-in speaker impulse responses: synthesised cabinet voices and
+//  measured WAV captures from Jester Dyne Productions.
 
 import Foundation
 
@@ -26,18 +18,54 @@ public struct CabinetIRModel: Identifiable, Hashable, Sendable {
 
 /// Built-in impulse responses for the IR Cabinet pedal.
 public enum CabinetIRLibrary {
-    /// Name of the custom slot appended to the built-in models.
+    /// Name of the user-imported slot.
     public static let customName = "Custom WAV"
 
     public static let models: [CabinetIRModel] = voices.map {
         CabinetIRModel(id: $0.id, name: $0.name, character: $0.character)
+    } + capturedModels
+
+    /// Choice values are persisted in presets and AU automation.
+    public static let customIndex = 12
+
+    public static let presetNames: [String] = {
+        var names = models.map(\.name)
+        names.insert(customName, at: customIndex)
+        return names
+    }()
+
+    static func builtInIndex(for choice: Int) -> Int? {
+        guard presetNames.indices.contains(choice), choice != customIndex else { return nil }
+        return choice < customIndex ? choice : choice - 1
     }
 
-    /// Choice list for the `model` parameter. The last entry is the custom slot.
-    public static let presetNames: [String] = models.map(\.name) + [customName]
+    private static let capturedModels = [
+        CabinetIRModel(id: "jester-cookie-monster", name: "Jester · Cookie Monster", character: "Measured Celestion V30 · SM57."),
+        CabinetIRModel(id: "jester-cathode-ray", name: "Jester · Cathode Ray Fleshburn", character: "Alternate measured Celestion V30 · SM57."),
+        CabinetIRModel(id: "jester-darth-genocider", name: "Jester · Darth Genocider", character: "Measured Eminence DV-77 · SM57."),
+        CabinetIRModel(id: "jester-v30-dv77", name: "Jester · V30 + DV-77", character: "Measured V30 and DV-77 blend · dual SM57.")
+    ]
 
-    /// Index of the custom slot in ``presetNames``.
-    public static let customIndex: Int = models.count
+    private static let resourceBundle: Bundle = {
+        #if SWIFT_PACKAGE
+        if let url = Bundle.main.url(forResource: "GtrBoard_BoardCore", withExtension: "bundle"),
+           let installed = Bundle(url: url) {
+            return installed
+        }
+        return Bundle.module
+        #else
+        return Bundle(for: ResourceAnchor.self)
+        #endif
+    }()
+
+    private final class ResourceAnchor {}
+
+    private static let capturedFiles: [ImpulseResponseFile?] = capturedModels.map { model in
+        guard let url = resourceBundle.url(forResource: model.id, withExtension: "wav", subdirectory: "IRs") else {
+            return nil
+        }
+        return try? ImpulseResponseFile.load(url: url)
+    }
 
     /// Human-readable library summary for the UI.
     public static var libraryDescription: String {
@@ -160,15 +188,24 @@ public enum CabinetIRLibrary {
 
     // MARK: - Generation
 
-    /// Synthesises the impulse response for a built-in model.
+    /// Returns a response by its index in `models`, which excludes Custom WAV.
     public static func impulseResponse(at index: Int, sampleRate: Double) -> [Float] {
-        guard voices.indices.contains(index) else {
-            return impulseResponse(at: 0, sampleRate: sampleRate)
+        if voices.indices.contains(index) {
+            return synthesise(voices[index], sampleRate: sampleRate)
         }
-        return synthesise(voices[index], sampleRate: sampleRate)
+        if let capture = capturedImpulse(at: index, sampleRate: sampleRate) {
+            return capture
+        }
+        return synthesise(voices[0], sampleRate: sampleRate)
     }
 
-    /// Synthesises the impulse response for a model name (case-insensitive).
+    private static func capturedImpulse(at index: Int, sampleRate: Double) -> [Float]? {
+        let captureIndex = index - voices.count
+        guard capturedFiles.indices.contains(captureIndex) else { return nil }
+        return capturedFiles[captureIndex]?.prepared(forSampleRate: sampleRate, maxTaps: IRKernel.maxTaps)
+    }
+
+    /// Returns the impulse response for a model name (case-insensitive).
     public static func impulseResponse(named name: String, sampleRate: Double) -> [Float]? {
         guard let index = models.firstIndex(where: {
             $0.name.localizedCaseInsensitiveCompare(name) == .orderedSame
@@ -184,7 +221,7 @@ public enum CabinetIRLibrary {
         if let cached = kernelCache[key] { return cached }
 
         let rate = Double(key)
-        let prepared = voices.indices.map { index in
+        let prepared = models.indices.map { index in
             IRKernel(
                 impulse: impulseResponse(at: index, sampleRate: rate),
                 blockSize: IRConvolver.blockSize

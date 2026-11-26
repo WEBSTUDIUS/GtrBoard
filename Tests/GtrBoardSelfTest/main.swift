@@ -920,10 +920,11 @@ do {
 print("▸ IR library")
 do {
     let models = CabinetIRLibrary.models
-    expect(models.count >= 12, "library ships at least twelve cabs (\(models.count))")
+    expect(models.count >= 16, "library ships synthetic and measured cabinets (\(models.count))")
     expect(Set(models.map(\.name)).count == models.count, "cab names are unique")
-    expect(CabinetIRLibrary.presetNames.count == models.count + 1, "one custom slot after the built-ins")
-    expect(CabinetIRLibrary.presetNames.last == CabinetIRLibrary.customName, "custom slot is last")
+    expect(CabinetIRLibrary.presetNames.count == models.count + 1, "one custom slot alongside the built-ins")
+    expect(CabinetIRLibrary.customIndex == 12 && CabinetIRLibrary.presetNames[12] == CabinetIRLibrary.customName,
+           "legacy presets and AU automation keep Custom WAV at index 12")
 
     var responses: [[Float]] = []
     for (index, model) in models.enumerated() {
@@ -1011,6 +1012,29 @@ do {
     expect(peak(output.left) <= 1.0001, "IR cabinet respects full scale")
     expect(processor.latencyFrames >= IRConvolver.latencyFrames,
            "IR pedal adds its latency to the report")
+}
+
+print("▸ Measured cabinets")
+do {
+    let names = ["Jester · Cookie Monster", "Jester · Cathode Ray Fleshburn",
+                 "Jester · Darth Genocider", "Jester · V30 + DV-77"]
+    let input = guitarPluck(frequency: 82.41, amplitude: 0.15, seconds: 0.25)
+    var previous: [Double]?
+    for (offset, name) in names.enumerated() {
+        let model = offset + 13
+        expect(CabinetIRLibrary.presetNames[model] == name, "\(name) keeps its assigned choice value")
+        let response = CabinetIRLibrary.impulseResponse(named: name, sampleRate: 48_000)
+        expect(response?.count == 8_192, "\(name) loads its measured WAV from bundled resources")
+        let settings = enabling(.ir, in: bareBoard(master: 0), ["model": Double(model), "mix": 1])
+        let output = render(makeProcessor(settings), left: input).left
+        expectFinite(output, "\(name) render is finite")
+        expect(rms(output) > 0.01, "\(name) renders an audible signal")
+        if let previous {
+            let difference = zip(previous, output).map { $0.0 - $0.1 }
+            expect(rms(difference) > 0.005, "\(name) selects a distinct kernel")
+        }
+        previous = output
+    }
 }
 
 print("▸ IR preset crossfade and throughput")

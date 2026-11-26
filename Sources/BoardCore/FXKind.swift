@@ -262,7 +262,7 @@ public enum FXCatalog {
                 category: .amp,
                 colorHex: 0x14B8A6,
                 parameters: [
-                    p("model", "Cabinet", 0...Double(CabinetIRLibrary.models.count), 0, .choice,
+                    p("model", "Cabinet", 0...Double(CabinetIRLibrary.presetNames.count - 1), 0, .choice,
                       choices: CabinetIRLibrary.presetNames),
                     p("mix", "Mix", 0...1, 1, .percent),
                     p("lowCut", "Low Cut", 40...250, 80, .hertz, log: true),

@@ -47,6 +47,7 @@ rm -rf "$APP"
 mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
 
 cp ".build/release/GtrBoard" "$APP/Contents/MacOS/GtrBoard"
+ditto ".build/release/GtrBoard_BoardCore.bundle" "$APP/Contents/Resources/GtrBoard_BoardCore.bundle"
 cp "Resources/Info.plist" "$APP/Contents/Info.plist"
 if [[ -f "Resources/AppIcon.icns" ]]; then
   cp "Resources/AppIcon.icns" "$APP/Contents/Resources/AppIcon.icns"

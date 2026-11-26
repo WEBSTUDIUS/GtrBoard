@@ -102,7 +102,7 @@ final class IRCabinetNode: FXNode {
 
     func apply(values: UnsafePointer<Double>, count: Int) {
         let model = Int(parameterValue(values, iModel, count: count, fallback: 0).rounded())
-        requestedModel = min(max(model, 0), CabinetIRLibrary.customIndex)
+        requestedModel = min(max(model, 0), CabinetIRLibrary.presetNames.count - 1)
         lowCutDB = parameterValue(values, iLowCut, count: count, fallback: 80)
         highCutDB = parameterValue(values, iHighCut, count: count, fallback: 9_000)
         mix.set(parameterValue(values, iMix, count: count, fallback: 1))
@@ -247,14 +247,15 @@ final class IRCabinetNode: FXNode {
 
     private func resolvedModel(_ model: Int) -> Int {
         if model == CabinetIRLibrary.customIndex, customKernel == nil { return 0 }
-        guard model >= 0, model < CabinetIRLibrary.models.count else { return 0 }
+        guard CabinetIRLibrary.presetNames.indices.contains(model) else { return 0 }
         return model
     }
 
     private func kernel(for model: Int) -> IRKernel? {
         if model == CabinetIRLibrary.customIndex { return customKernel }
-        guard builtInKernels.indices.contains(model) else { return builtInKernels.first }
-        return builtInKernels[model]
+        guard let index = CabinetIRLibrary.builtInIndex(for: model),
+              builtInKernels.indices.contains(index) else { return builtInKernels.first }
+        return builtInKernels[index]
     }
 
     private func loadKernel(for model: Int) {

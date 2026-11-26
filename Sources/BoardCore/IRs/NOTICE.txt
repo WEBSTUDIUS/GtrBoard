@@ -1,0 +1,11 @@
+Jester's Brutal Pack 1.0
+Bastian Karschewski (Jester Dyne Productions), 2022
+CC0 1.0 Universal — https://creativecommons.org/publicdomain/zero/1.0/
+Source: https://www.jester-dyne-productions.com/brutal-ir-pack/
+Source archive SHA-256: 299dc053f01ebd1e980459adc48f9c6b8a8c7af91917b4f946512eefdbb311ea
+
+The original 48 kHz WAVs are included byte-for-byte under these names:
+jester-cookie-monster.wav   — 1_Cookie_Monster.wav
+jester-cathode-ray.wav   — 14_Cathode_Ray_Fleshburn.wav
+jester-darth-genocider.wav  — 2_Darth_Genocider.wav
+jester-v30-dv77.wav         — 6_Vertical_Lip_Stabber.wav

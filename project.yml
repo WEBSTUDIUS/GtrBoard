@@ -40,6 +40,10 @@ targets:
     platform: macOS
     sources:
       - path: Sources/BoardCore
+        excludes: [IRs]
+      - path: Sources/BoardCore/IRs
+        type: folder
+        buildPhase: resources
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.andreyilin.gtrboard.boardcore

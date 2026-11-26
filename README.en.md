@@ -14,10 +14,10 @@ preset crossfades and a menu-bar controller.
 
 [![macOS](https://img.shields.io/badge/macOS-14%2B-black?logo=apple&logoColor=white)](#build)
 [![Swift](https://img.shields.io/badge/Swift-6-F05138?logo=swift&logoColor=white)](#build)
-[![Tests](https://img.shields.io/badge/tests-1083%20passing-2ea043)](#tests)
+[![Tests](https://img.shields.io/badge/tests-1118%20passing-2ea043)](#tests)
 [![CI](https://github.com/WEBSTUDIUS/GtrBoard/actions/workflows/ci.yml/badge.svg)](https://github.com/WEBSTUDIUS/GtrBoard/actions/workflows/ci.yml)
 [![License](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
-[![Version](https://img.shields.io/badge/version-0.5.0-8b5cf6)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-0.5.1-8b5cf6)](CHANGELOG.md)
 
 [Quick start](#quickstart) · [AI presets](#ai-presets) · [Recording](#record) ·
 [Build](#build) · [Architecture](#architecture)
@@ -64,7 +64,7 @@ to play.
   a footswitch and LED.
 - **Amp and cabinet.** Clean / Crunch / Lead / High Gain voicings, gain, tone
   stack, presence, master, sag; cabinet with low/high cut and resonance.
-- **IR cabinet.** Twelve built-in impulses (V30 4x12 SM57 and 57+121, Mesa OS,
+- **IR cabinet.** Sixteen built-in impulses: four Jester captures and twelve synthesised cabs (V30 4x12 SM57 and 57+121, Mesa OS,
   Marshall G12T-75 and V30, Diezel, ENGL, Orange PPC, 5150, Fredman 57/57,
   Djent tight, modern scoop) plus your own WAV: low/high cut, mix, level and
   click-free model switching. IR presets: Enter Sandman IR,
@@ -93,7 +93,7 @@ to play.
 
 ### 1. Build the app
 
-> **Prebuilt:** [GtrBoard 0.5.0 for macOS (Apple Silicon), zip](https://github.com/WEBSTUDIUS/GtrBoard/releases/latest).
+> **Prebuilt:** [GtrBoard 0.5.1 for macOS (Apple Silicon), zip](https://github.com/WEBSTUDIUS/GtrBoard/releases/latest).
 > Unzip the `.app` and open it. The build is ad-hoc signed; if Gatekeeper
 > complains, right-click → **Open**.
 
@@ -112,7 +112,7 @@ Other commands:
 ```bash
 ./run.sh       # build and open
 ./install.sh   # install to /Applications (~/Applications fallback)
-./test.sh      # DSP/preset self-tests (1083 checks)
+./test.sh      # DSP/preset self-tests (1118 checks)
 ```
 
 ### 2. Plug in a guitar
@@ -163,7 +163,7 @@ Speakers/Phones ←───┘
 | Fuzz | sustain, tone, level, bias | Big Muff: two stages, LP/HP blending |
 | Amplifier | gain, bass, mid, treble, presence, master, voicing | four-voice preamp + sag |
 | Cabinet | low cut, high cut, resonance | 4×12, 110 Hz resonance, 2.6 kHz presence |
-| IR Cabinet | model, mix, low cut, high cut, level | 12 built-in impulses plus a custom WAV, one block of latency |
+| IR Cabinet | model, mix, low cut, high cut, level | 16 built-in impulses plus a custom WAV, one block of latency |
 | Chorus | rate, depth, mix, width | two modulated voices, stereo LFO |
 | Flanger | rate, depth, feedback, mix, manual | short delay with resonant feedback |
 | Phaser | rate, depth, feedback, mix, stages | 4–12 all-pass stages |
@@ -180,7 +180,8 @@ its order; **Reset chain** restores the factory order.
   clipping, envelope-driven sag, passive tone stack.
 - **Cabinet** — 24 dB/oct low/high cut, 110 Hz resonance, 2.6 kHz presence.
 - **IR Cabinet** — a speaker impulse instead of the analogue cab. Twelve
-  synthesised cabinets voiced for metal; the pedal menu opens **Import WAV…**
+  synthesised cabinets and four measured Jester captures recorded with SM57s
+  (CC0). Select them in **Cabinet**, or use **Import WAV…**
   for third-party IRs (PCM 8/16/24/32 and float, mono or stereo). Imports are
   copied to `~/Library/Application Support/GtrBoard/IRs`, resampled to the
   session rate, energy-normalised and trimmed to 170 ms. The IR pedal adds 64
@@ -583,7 +584,7 @@ Covered:
 - throughput: a full high-gain board renders ~75× faster than real time on
   Apple Silicon.
 
-Current run: **1083 checks**, all passing. GitHub Actions runs the same suite on
+Current run: **1118 checks**, all passing. GitHub Actions runs the same suite on
 every push and pull request and uploads the built `.app` as an artifact.
 
 ## <a id="trouble"></a>Troubleshooting

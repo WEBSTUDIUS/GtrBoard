@@ -302,19 +302,19 @@ struct PedalCard: View {
     private var irModelSelector: some View {
         let allChoices = descriptor.parameter("model")?.choices ?? []
         let current = Int(unit.value("model").rounded())
-        let choices: [String] = allowsCustomIR
-            ? allChoices
-            : Array(allChoices.prefix(CabinetIRLibrary.models.count))
+        let choices = allChoices.enumerated().filter { index, _ in
+            allowsCustomIR || index != CabinetIRLibrary.customIndex
+        }
         let isCustom = current == CabinetIRLibrary.customIndex
         let label: String = {
             if isCustom, let customIRName {
                 return customIRName
             }
-            return choices.indices.contains(current) ? choices[current] : "Cabinet"
+            return choices.first(where: { $0.offset == current })?.element ?? "Cabinet"
         }()
 
         return Menu {
-            ForEach(Array(choices.enumerated()), id: \.offset) { index, name in
+            ForEach(choices, id: \.offset) { index, name in
                 Button {
                     // Picking the custom slot without an imported file opens
                     // the importer instead of silently falling back.

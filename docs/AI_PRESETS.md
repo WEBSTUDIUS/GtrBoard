@@ -119,7 +119,7 @@ gate → compressor → boost → overdrive → distortion → fuzz → amp → 
 | `fuzz` | `sustain` 0…1 (0.7), `tone` 0…1 (0.5), `level` −30…6 dB (−6), `bias` 0…1 (0.5) |
 | `amp` | `gain` 0…40 dB (12), `bass`/`mid`/`treble` −12…12 dB (0), `presence` 0…12 dB (3), `master` −40…6 dB (−8), `voicing` 0…3 (1) |
 | `cabinet` | `lowCut` 40…250 Hz (80), `highCut` 2000…12000 Hz (5500), `resonance` 0…12 dB (4) |
-| `ir` | `model` 0…12 (0), `mix` 0…1 (1), `lowCut` 40…250 Hz (80), `highCut` 3000…16000 Hz (9000), `level` −24…12 dB (0) |
+| `ir` | `model` 0…16 (0), `mix` 0…1 (1), `lowCut` 40…250 Hz (80), `highCut` 3000…16000 Hz (9000), `level` −24…12 dB (0) |
 | `chorus` | `rate` 0.05…8 Hz (0.8), `depth` 0…1 (0.5), `mix` 0…1 (0.4), `width` 0…1 (0.7) |
 | `flanger` | `rate` 0.02…5 Hz (0.25), `depth` 0…1 (0.6), `feedback` −0.95…0.95 (0.35), `mix` 0…1 (0.5), `manual` 0.5…10 ms (2.5) |
 | `phaser` | `rate` 0.02…5 Hz (0.35), `depth` 0…1 (0.6), `feedback` 0…0.9 (0.3), `mix` 0…1 (0.5), `stages` 0…3 (1) |
@@ -148,6 +148,10 @@ gate → compressor → boost → overdrive → distortion → fuzz → amp → 
 | 10 | Djent · Low-Cut Tight |
 | 11 | Modern Metal · Scoop+ |
 | 12 | Custom WAV (импорт в приложении) |
+| 13 | Jester · Cookie Monster |
+| 14 | Jester · Cathode Ray Fleshburn |
+| 15 | Jester · Darth Genocider |
+| 16 | Jester · V30 + DV-77 |
 
 IR-педаль стоит после аналогового кабинета. Для IR-пресета включайте `ir` и
 выключайте `cabinet`, иначе кабинеты складываются и звук темнеет.

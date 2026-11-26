@@ -12,9 +12,9 @@ A/B-банки, кроссфейд между пресетами и меню-б�
 
 [![macOS](https://img.shields.io/badge/macOS-14%2B-black?logo=apple&logoColor=white)](#build)
 [![Swift](https://img.shields.io/badge/Swift-6-F05138?logo=swift&logoColor=white)](#build)
-[![Tests](https://img.shields.io/badge/tests-1083%20passing-2ea043)](#tests)
+[![Tests](https://img.shields.io/badge/tests-1118%20passing-2ea043)](#tests)
 [![License](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
-[![Version](https://img.shields.io/badge/version-0.5.0-8b5cf6)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-0.5.1-8b5cf6)](CHANGELOG.md)
 [![CI](https://github.com/WEBSTUDIUS/GtrBoard/actions/workflows/ci.yml/badge.svg)](https://github.com/WEBSTUDIUS/GtrBoard/actions/workflows/ci.yml)
 
 <p><b>Русский</b> · <a href="README.en.md">🇬🇧 English</a></p>
@@ -64,7 +64,7 @@ GtrBoard — самостоятельное macOS-приложение для г
   включается футсвитчем или LED.
 - **Усилитель и кабинет.** Clean / Crunch / Lead / High Gain, gain, темброблок,
   presence, master, sag; кабинет с low/high cut и резонансом.
-- **IR-кабинет.** 12 готовых импульсов (V30 4×12 SM57 и 57+121, Mesa OS,
+- **IR-кабинет.** 16 готовых импульсов: четыре замера Jester и 12 синтезированных (V30 4×12 SM57 и 57+121, Mesa OS,
   Marshall G12T-75 и V30, Diezel, ENGL, Orange PPC, 5150, Fredman 57/57,
   Djent tight, modern scoop) и импорт своего WAV: low/high cut, mix, level,
   переключение импульса без щелчка. IR-пресеты: Enter Sandman IR,
@@ -94,7 +94,7 @@ GtrBoard — самостоятельное macOS-приложение для г
 
 ### 1. Соберите приложение
 
-> **Готовая сборка:** [GtrBoard 0.5.0 для macOS (Apple Silicon), zip](https://github.com/WEBSTUDIUS/GtrBoard/releases/latest).
+> **Готовая сборка:** [GtrBoard 0.5.1 для macOS (Apple Silicon), zip](https://github.com/WEBSTUDIUS/GtrBoard/releases/latest).
 > Распакуйте `.app` и откройте. Сборка ad-hoc; если Gatekeeper ругается —
 > правый клик → **Open**.
 
@@ -114,7 +114,7 @@ Gatekeeper блокирует копию в `/Applications`, откройте е
 ```bash
 ./run.sh       # собрать и открыть
 ./install.sh   # установить в /Applications (~/Applications как fallback)
-./test.sh      # DSP/пресет self-tests (1083 проверок)
+./test.sh      # DSP/пресет self-tests (1118 проверок)
 ```
 
 ### 2. Подключите гитару
@@ -164,7 +164,7 @@ Speakers/Phones ←───┘
 | Fuzz | sustain, tone, level, bias | Big Muff: два каскада, LP/HP-блендинг |
 | Amplifier | gain, bass, mid, treble, presence, master, voicing | четырёхголосный преамп + sag |
 | Cabinet | low cut, high cut, resonance | 4×12, резонанс 110 Гц, presence 2.6 кГц |
-| IR Cabinet | model, mix, low cut, high cut, level | 12 готовых импульсов + свой WAV, свёртка без задержки сверх одного блока |
+| IR Cabinet | model, mix, low cut, high cut, level | 16 готовых импульсов + свой WAV, свёртка без задержки сверх одного блока |
 | Chorus | rate, depth, mix, width | два модулированных голоса, стерео-LFO |
 | Flanger | rate, depth, feedback, mix, manual | короткая линия с резонансной ОС |
 | Phaser | rate, depth, feedback, mix, stages | 4–12 all-pass ступеней |
@@ -181,8 +181,9 @@ Speakers/Phones ←───┘
   триодный клип, sag по огибающей, пассивный темброблок.
 - **Cabinet** — 24 дБ/окт low/high cut, резонанс 110 Гц, presence 2.6 кГц.
 - **IR Cabinet** — колоночный импульс вместо аналогового кабинета. 12
-  синтезированных кабинетов с уклоном в металл; меню на педали открывает
-  **Import WAV…** и подхватывает сторонний IR (PCM 8/16/24/32 и float,
+  синтезированных кабинетов и четыре измеренных импульса Jester через SM57,
+  лицензия CC0. Их можно выбрать в меню **Cabinet**. Там же доступен
+  **Import WAV…** для сторонних IR (PCM 8/16/24/32 и float,
   моно/стерео). Импорт копируется в `~/Library/Application Support/GtrBoard/IRs`,
   ресемплится под частоту сессии и нормализуется по энергии; пользовательский
   импульс обрезается до 170 мс. IR-педаль добавляет 64 сэмпла задержки — она
@@ -587,7 +588,7 @@ master, limiter). При смене пресета вторая цепь гот�
 - пропускная способность: полный high-gain борд рендерится в ~60 раз быстрее
   реального времени на Apple Silicon.
 
-Текущий прогон: **1083 проверок**, все проходят.
+Текущий прогон: **1118 проверок**, все проходят.
 
 ## <a id="trouble"></a>Если что-то не так
 
