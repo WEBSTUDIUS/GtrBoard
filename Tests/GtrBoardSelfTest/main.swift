@@ -45,7 +45,7 @@ func sine(frequency: Double, amplitude: Double, seconds: Double, sampleRate: Dou
     return (0..<count).map { amplitude * sin(2 * .pi * frequency * Double($0) / sampleRate) }
 }
 
-/// Decaying harmonic note used for factory-preset loudness calibration.
+/// Synthetic plucked guitar string used for DSP tests.
 func guitarPluck(frequency: Double, amplitude: Double, seconds: Double, sampleRate: Double = 48_000) -> [Double] {
     let count = Int(seconds * sampleRate)
     var values = [Double](repeating: 0, count: count)
@@ -481,6 +481,27 @@ do {
     expect(true, "garbage preset data throws")
 }
 
+for json in ["{}", #"{"unrelated":true}"#, #"{"format":"com.andreyilin.gtrboard.preset","preset":null}"#] {
+    do {
+        _ = try PresetDocument.decode(Data(json.utf8))
+        expect(false, "invalid preset shape is rejected: \(json)")
+    } catch {
+        expect(error as? PresetError == .invalidJSON, "invalid preset shape reports invalid JSON")
+    }
+}
+
+let artistIRPresets = BuiltInPresets.all.filter { $0.tags.contains("ir") }
+for (artist, count) in [("ac/dc", 2), ("metallica", 4), ("linkin park", 2), ("pantera", 2)] {
+    let presets = artistIRPresets.filter { $0.tags.contains(artist) }
+    expect(presets.count >= count, "\(artist) has its factory IR presets")
+    for preset in presets {
+        let ir = preset.settings.unit(.ir)
+        expect(ir?.enabled == true && (ir?.value("model") ?? .infinity) < Double(CabinetIRLibrary.customIndex),
+               "\(preset.name) uses a built-in IR")
+        expect(preset.settings.unit(.cabinet)?.enabled == false, "\(preset.name) bypasses the analog cabinet")
+    }
+}
+
 // MARK: - Preset store
 
 print("▸ Preset store")
@@ -524,23 +545,51 @@ do {
 
 // MARK: - Preset loudness
 
+/// Approximates K-weighting for relative loudness comparisons at 48 kHz.
+func weightedRMS(_ output: (left: [Double], right: [Double])) -> Double {
+    let highPass = BiquadDesign.coefficients(shape: .highPass, frequency: 38,
+                                             gainDB: 0, q: 0.5, sampleRate: 48_000)
+    let shelf = BiquadDesign.coefficients(shape: .highShelf, frequency: 1_680,
+                                          gainDB: 4, q: 0.707, sampleRate: 48_000)
+    func channelPower(_ samples: [Double]) -> Double {
+        var low = BiquadState()
+        var high = BiquadState()
+        var power = 0.0
+        for sample in samples {
+            let weighted = high.process(low.process(sample, highPass), shelf)
+            power += weighted * weighted
+        }
+        return power / Double(samples.count)
+    }
+    return sqrt((channelPower(output.left) + channelPower(output.right)) / 2)
+}
+
 print("▸ Preset loudness")
 do {
-    let rate = 48_000.0
-    let input = guitarPluck(frequency: 110, amplitude: 0.22, seconds: 1.8)
-    let target = 0.075
-    var levels: [(String, Double)] = []
-    for preset in BuiltInPresets.all {
-        let output = render(makeProcessor(preset.settings), left: input)
-        let start = Int(rate * 0.15)
-        let end = min(output.left.count, Int(rate * 1.35))
-        levels.append((preset.name, rms(Array(output.left[start..<end]))))
+    let note = guitarPluck(frequency: 146.83, amplitude: 0.18, seconds: 1.2)
+    let low = guitarPluck(frequency: 82.41, amplitude: 0.17, seconds: 1.2)
+    let fifth = guitarPluck(frequency: 123.47, amplitude: 0.09, seconds: 1.2)
+    let octave = guitarPluck(frequency: 164.81, amplitude: 0.06, seconds: 1.2)
+    let chord = zip(zip(low, fifth), octave).map { $0.0.0 + $0.0.1 + $0.1 }
+    let mutedHit = chord.prefix(7_200).enumerated().map { index, sample in
+        sample * exp(-Double(index) / 1_500)
     }
-    let decibels = levels.map { 20 * log10(max($0.1, 1e-9) / target) }
-    let spread = (decibels.max() ?? 0) - (decibels.min() ?? 0)
-    print(String(format: "  • level spread: %.1f dB", spread))
-    for (entry, delta) in zip(levels, decibels) {
-        expect(abs(delta) < 4.0, "\(entry.0) is level-calibrated (got \(String(format: "%+.1f", delta)) dB)")
+    let chugs = Array(repeating: mutedHit, count: 8).flatMap { $0 }
+    let inputs = [note, chord, chugs]
+    let reference = BuiltInPresets.all[0].settings
+    let targets = inputs.map { weightedRMS(render(makeProcessor(reference), left: $0)) }
+    func deltas(_ settings: BoardSettings) -> [Double] {
+        zip(inputs, targets).map { input, target in
+            let level = weightedRMS(render(makeProcessor(settings), left: input))
+            return 20 * log10(max(level, 1e-9) / target)
+        }
+    }
+    for preset in BuiltInPresets.all {
+        let offsets = deltas(preset.settings)
+        let mean = offsets.reduce(0, +) / Double(offsets.count)
+        let worst = offsets.map { abs($0) }.max() ?? .infinity
+        expect(abs(mean) <= 0.75, "\(preset.name) is level-calibrated across playing styles (got \(mean) dB)")
+        expect(worst <= 4, "\(preset.name) stays within 4 dB on every test signal (got \(worst) dB)")
     }
 }
 

@@ -158,7 +158,17 @@ public struct PresetDocument: Codable, Sendable {
     public static func decode(_ data: Data) throws -> Preset {
         guard !data.isEmpty else { throw PresetError.emptyFile }
 
-        if let document = try? PresetCodec.decoder.decode(PresetDocument.self, from: data) {
+        guard let json = try? JSONSerialization.jsonObject(with: data, options: .fragmentsAllowed) else {
+            throw PresetError.unreadableFile
+        }
+        guard let object = json as? [String: Any] else {
+            throw PresetError.invalidJSON
+        }
+
+        if object["preset"] != nil || object["format"] != nil || object["version"] != nil {
+            guard let document = try? PresetCodec.decoder.decode(PresetDocument.self, from: data) else {
+                throw PresetError.invalidJSON
+            }
             if document.format != formatIdentifier {
                 throw PresetError.unsupportedFormat(document.format)
             }
@@ -168,15 +178,11 @@ public struct PresetDocument: Codable, Sendable {
             return document.preset
         }
 
-        if let preset = try? PresetCodec.decoder.decode(Preset.self, from: data) {
-            return preset
-        }
-
-        // Distinguish "valid JSON but wrong shape" from "not JSON at all".
-        if (try? JSONSerialization.jsonObject(with: data)) != nil {
+        guard object["name"] is String || object["settings"] is [String: Any],
+              let preset = try? PresetCodec.decoder.decode(Preset.self, from: data) else {
             throw PresetError.invalidJSON
         }
-        throw PresetError.unreadableFile
+        return preset
     }
 }
 

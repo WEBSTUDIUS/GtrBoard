@@ -7,14 +7,14 @@
 **Гитарный борд для macOS — без плагина, без DAW, без задержки на подумать.**
 
 Низколатентный standalone-тракт: гитара → 15 педалей → усилитель → кабинет →
-IR-кабинет → 10-полосный EQ → запись. 30 заводских пресетов, свои пресеты в открытом JSON,
+IR-кабинет → 10-полосный EQ → запись. 38 заводских пресетов, свои пресеты в открытом JSON,
 A/B-банки, кроссфейд между пресетами и меню-бар.
 
 [![macOS](https://img.shields.io/badge/macOS-14%2B-black?logo=apple&logoColor=white)](#build)
 [![Swift](https://img.shields.io/badge/Swift-6-F05138?logo=swift&logoColor=white)](#build)
-[![Tests](https://img.shields.io/badge/tests-906%20passing-2ea043)](#tests)
+[![Tests](https://img.shields.io/badge/tests-1083%20passing-2ea043)](#tests)
 [![License](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
-[![Version](https://img.shields.io/badge/version-0.4.0-8b5cf6)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-0.5.0-8b5cf6)](CHANGELOG.md)
 [![CI](https://github.com/WEBSTUDIUS/GtrBoard/actions/workflows/ci.yml/badge.svg)](https://github.com/WEBSTUDIUS/GtrBoard/actions/workflows/ci.yml)
 
 <p><b>Русский</b> · <a href="README.en.md">🇬🇧 English</a></p>
@@ -80,7 +80,7 @@ GtrBoard — самостоятельное macOS-приложение для г
 - **Модуляция и время.** Chorus, Flanger, Phaser, Tremolo, Delay (digital /
   analog / ping-pong), Reverb (room / hall / plate).
 - **10-полосный графический EQ** 31.5 Гц – 16 кГц, ±12 дБ, в конце цепи.
-- **Пресеты.** 30 заводских ригов, свои пресеты, поиск, импорт/экспорт JSON,
+- **Пресеты.** 38 заводских ригов, свои пресеты, поиск, импорт/экспорт JSON,
   A/B-банки и переключение пробелом.
 - **Кроссфейд.** Две независимые цепи: новый пресет подмешивается за 50 мс —
   без щелчка, паузы и скачка уровня.
@@ -94,7 +94,7 @@ GtrBoard — самостоятельное macOS-приложение для г
 
 ### 1. Соберите приложение
 
-> **Готовая сборка:** [GtrBoard 0.4.0 для macOS (Apple Silicon), zip](https://github.com/WEBSTUDIUS/GtrBoard/releases/latest).
+> **Готовая сборка:** [GtrBoard 0.5.0 для macOS (Apple Silicon), zip](https://github.com/WEBSTUDIUS/GtrBoard/releases/latest).
 > Распакуйте `.app` и откройте. Сборка ad-hoc; если Gatekeeper ругается —
 > правый клик → **Open**.
 
@@ -114,7 +114,7 @@ Gatekeeper блокирует копию в `/Applications`, откройте е
 ```bash
 ./run.sh       # собрать и открыть
 ./install.sh   # установить в /Applications (~/Applications как fallback)
-./test.sh      # DSP/пресет self-tests (906 проверок)
+./test.sh      # DSP/пресет self-tests (1083 проверок)
 ```
 
 ### 2. Подключите гитару
@@ -244,7 +244,7 @@ master volume, output trim, limiter и bypass.
 ### Заводские риги
 
 <details>
-<summary><b>30 заводских пресетов — развернуть</b></summary>
+<summary><b>38 заводских пресетов — развернуть</b></summary>
 
 | Пресет | Ориентир | Теги |
 |---|---|---|
@@ -278,6 +278,14 @@ master volume, output trim, limiter и bypass.
 | Djent IR | tight-буст → 5150-подобный head → Djent IR | metal, djent, ir |
 | Swedish Chainsaw IR | hard-clip → high gain → Fredman 57/57 IR | metal, death, ir |
 | Doom Wall IR | Big Muff → тёмный усилитель → Orange PPC IR | metal, doom, ir |
+| AC/DC · Back in Black IR | British crunch → 1960 V30 IR | classic-rock, rhythm, ir |
+| AC/DC · Thunderstruck IR | Bright British crunch → 1960 G12T-75 IR | classic-rock, rhythm, ir |
+| Metallica · Master of Puppets IR | Tight boost → high gain → Mesa OS SM57 IR | thrash, rhythm, ir |
+| Metallica · Sad But True IR | High gain → V30 57+121 IR | metal, rhythm, ir |
+| Linkin Park · One Step Closer IR | Tight boost → high gain → Mesa OS SM57 IR | nu-metal, rhythm, ir |
+| Linkin Park · Faint IR | Tight boost → high gain → V30 SM57 IR | nu-metal, rhythm, ir |
+| Pantera · Walk IR | Hard clip → amp → 1960 G12T-75 IR | groove-metal, rhythm, ir |
+| Pantera · Cowboys from Hell IR | Hard clip → amp → 1960 V30 IR | groove-metal, rhythm, ir |
 
 </details>
 
@@ -542,7 +550,7 @@ Sources/
   BoardCore/              # без Core Audio/AppKit: DSP, модели, пресеты
     DSP/                  # узлы эффектов, oversampler, reverb, limiter
     BoardSettings.swift   # полный снимок борда
-    BuiltInPresets.swift  # 30 заводских ригов
+    BuiltInPresets.swift  # 38 заводских ригов
   GtrBoard/
     Audio/                # HAL, aggregate-девайс, render callback, рекордер
     UI/                   # SwiftUI: педалборд, EQ, пресеты, футер
@@ -569,7 +577,7 @@ master, limiter). При смене пресета вторая цепь гот�
 Проверяется:
 
 - каталог эффектов и нормализация параметров;
-- сериализация всех 30 заводских пресетов и tolerant-декодирование;
+- сериализация всех 38 заводских пресетов и tolerant-декодирование;
 - запись/чтение/экспорт/импорт `.gtrpreset`;
 - АЧХ биквадов и графического EQ;
 - рендер всех заводских ригов: конечность, отсутствие клиппинга, сигнал;
@@ -584,7 +592,7 @@ master, limiter). При смене пресета вторая цепь гот�
 - пропускная способность: полный high-gain борд рендерится в ~60 раз быстрее
   реального времени на Apple Silicon.
 
-Текущий прогон: **906 проверок**, все проходят.
+Текущий прогон: **1083 проверок**, все проходят.
 
 ## <a id="trouble"></a>Если что-то не так
 

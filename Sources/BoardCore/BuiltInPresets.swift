@@ -388,46 +388,153 @@ public enum BuiltInPresets {
                 unit(.reverb, ["size": 0.5, "damping": 0.5, "mix": 0.12, "predelay": 20, "mode": 1])
             ],
             eq: [1, 1, 0, 0, -1, 0, -1, 0, 0, 0]
+        ),
+        rig(
+            name: "AC/DC · Back in Black IR",
+            gear: "British crunch → 1960 V30 IR",
+            tags: ["ac/dc", "classic-rock", "rhythm", "ir"],
+            notes: "Dry rhythm crunch with forward mids and room for the pick attack.",
+            units: [
+                unit(.amp, ["voicing": 1, "gain": 23, "bass": 1, "mid": 3, "treble": 1.5, "presence": 4, "master": -12]),
+                unit(.ir, ["model": 4, "mix": 1, "lowCut": 85, "highCut": 5_800, "level": 0])
+            ]
+        ),
+        rig(
+            name: "AC/DC · Thunderstruck IR",
+            gear: "Bright British crunch → 1960 G12T-75 IR",
+            tags: ["ac/dc", "classic-rock", "rhythm", "ir"],
+            notes: "A brighter, lightly driven voice for the opening single-note pattern and ringing chords.",
+            units: [
+                unit(.amp, ["voicing": 1, "gain": 21, "bass": 0, "mid": 3, "treble": 3, "presence": 5, "master": -11]),
+                unit(.ir, ["model": 3, "mix": 1, "lowCut": 95, "highCut": 6_700, "level": 0])
+            ]
+        ),
+        rig(
+            name: "Metallica · Master of Puppets IR",
+            gear: "Tight boost → high gain → Mesa OS SM57 IR",
+            tags: ["metallica", "thrash", "rhythm", "ir"],
+            notes: "Fast palm mutes with a firm low end and a broad cut through the middle.",
+            units: [
+                unit(.gate, ["threshold": -50, "decay": 105, "range": 70]),
+                unit(.boost, ["gain": 8, "tone": 0, "tight": 120]),
+                unit(.amp, ["voicing": 3, "gain": 29, "bass": 1, "mid": -3, "treble": 3, "presence": 6, "master": -13]),
+                unit(.ir, ["model": 2, "mix": 1, "lowCut": 95, "highCut": 7_100, "level": 0])
+            ],
+            eq: [0, 1, 0, -1, -3, -2, 1, 1, -2, 0]
+        ),
+        rig(
+            name: "Metallica · Sad But True IR",
+            gear: "High gain → V30 57+121 IR",
+            tags: ["metallica", "metal", "rhythm", "ir"],
+            notes: "A heavier, rounder rhythm sound for D-standard riffs with space between the hits.",
+            units: [
+                unit(.gate, ["threshold": -51, "decay": 145, "range": 70]),
+                unit(.boost, ["gain": 5, "tone": 0, "tight": 100]),
+                unit(.amp, ["voicing": 3, "gain": 29, "bass": 2, "mid": -2, "treble": 1, "presence": 4, "master": -13]),
+                unit(.ir, ["model": 1, "mix": 1, "lowCut": 72, "highCut": 6_100, "level": 0])
+            ],
+            eq: [0, 1, 1, -1, -2, 0, 1, 0, -2, 0]
+        ),
+        rig(
+            name: "Linkin Park · One Step Closer IR",
+            gear: "Tight boost → high gain → Mesa OS SM57 IR",
+            tags: ["linkin park", "nu-metal", "rhythm", "ir"],
+            notes: "A punchy drop-D rhythm with a dry top and a low-mid push for short power chords.",
+            units: [
+                unit(.gate, ["threshold": -49, "decay": 105, "range": 70]),
+                unit(.boost, ["gain": 6, "tone": 0, "tight": 115]),
+                unit(.amp, ["voicing": 3, "gain": 28, "bass": 1, "mid": 0, "treble": 2, "presence": 5, "master": -13]),
+                unit(.ir, ["model": 2, "mix": 1, "lowCut": 80, "highCut": 6_500, "level": 0])
+            ],
+            eq: [0, 0, 1, 1, -1, 0, 1, 0, -2, 0]
+        ),
+        rig(
+            name: "Linkin Park · Faint IR",
+            gear: "Tight boost → high gain → V30 SM57 IR",
+            tags: ["linkin park", "nu-metal", "rhythm", "ir"],
+            notes: "A leaner rhythm voice with enough upper-mid attack to cut through a busy arrangement.",
+            units: [
+                unit(.gate, ["threshold": -48, "decay": 85, "range": 70]),
+                unit(.boost, ["gain": 8, "tone": 0, "tight": 145]),
+                unit(.amp, ["voicing": 3, "gain": 27, "bass": 0, "mid": 1, "treble": 2, "presence": 5, "master": -13]),
+                unit(.ir, ["model": 0, "mix": 1, "lowCut": 105, "highCut": 7_200, "level": 0])
+            ],
+            eq: [0, 0, -1, -1, 0, 1, 2, 0, -2, 0]
+        ),
+        rig(
+            name: "Pantera · Walk IR",
+            gear: "Hard clip → amp → 1960 G12T-75 IR",
+            tags: ["pantera", "groove-metal", "rhythm", "ir"],
+            notes: "Dry, sharply scooped groove rhythm with a hard clipping edge and a controlled top.",
+            units: [
+                unit(.gate, ["threshold": -49, "decay": 120, "range": 70]),
+                unit(.distortion, ["gain": 24, "tone": 0.53, "level": -8, "edge": 0.75]),
+                unit(.amp, ["voicing": 2, "gain": 19, "bass": 1, "mid": -5, "treble": 3, "presence": 6, "master": -13]),
+                unit(.ir, ["model": 3, "mix": 1, "lowCut": 85, "highCut": 6_600, "level": 0])
+            ],
+            eq: [0, 1, 1, 0, -4, -3, 1, 2, -2, 0]
+        ),
+        rig(
+            name: "Pantera · Cowboys from Hell IR",
+            gear: "Hard clip → amp → 1960 V30 IR",
+            tags: ["pantera", "groove-metal", "rhythm", "ir"],
+            notes: "Brighter and tighter than the Walk rig, with an upper-mid bite for quick picked riffs.",
+            units: [
+                unit(.gate, ["threshold": -50, "decay": 90, "range": 70]),
+                unit(.distortion, ["gain": 26, "tone": 0.59, "level": -8, "edge": 0.75]),
+                unit(.amp, ["voicing": 2, "gain": 20, "bass": 0, "mid": -4, "treble": 3, "presence": 6, "master": -13]),
+                unit(.ir, ["model": 4, "mix": 1, "lowCut": 100, "highCut": 7_100, "level": 0])
+            ],
+            eq: [0, 0, 0, -1, -3, -2, 2, 1, -2, 0]
         )
     ])
 
     /// Factory loudness calibration.
     ///
-    /// Every preset was rendered with the same decaying guitar note and its
-    /// RMS was matched to 0.075. The trim is applied after the master volume
+    /// Each rig is matched to Studio Clean on a single note, a power chord
+    /// and repeated palm mutes using frequency-weighted stereo RMS.
+    /// The trim is applied after the master volume
     /// and before the limiter, so it changes level without changing the amp's
     /// drive, tone stack or the user's master setting.
     private static let levelTrims: [String: Double] = [
         "Studio Clean": 21.0,
-        "Sultans of Swing": 19.5,
-        "Little Wing": 18.5,
-        "Texas Flood": 23.5,
-        "Slow Dancing": 14.5,
-        "Plexi Crunch": 4.0,
-        "Back in Black": 1.5,
-        "Purple Haze": -3.5,
-        "Comfortably Numb": -4.0,
-        "Smells Like Teen Spirit": 16.5,
-        "Master of Puppets": -3.0,
-        "Enter Sandman": -2.0,
-        "Killing in the Name": 0.0,
-        "Seven Nation Army": 6.0,
-        "Streets Have No Name": 23.0,
-        "Everlong": -2.0,
-        "Only Shallow": -1.5,
-        "Ambient Swell": 17.0,
-        "Djent Tight": 0.0,
-        "Funk Clean": 24.0,
-        "Garage Rock": 5.0,
-        "Ain't Talkin' 'Bout Love": -0.5,
-        "Whole Lotta Love": -3.0,
-        "Modern Lead": -3.5,
-        "Enter Sandman IR": -10.1,
-        "Enter Sandman IR · EQ": -10.3,
-        "Modern Metal IR": -11.5,
-        "Djent IR": 0.0,
-        "Swedish Chainsaw IR": -6.3,
-        "Doom Wall IR": -10.2
+        "Sultans of Swing": 18.5,
+        "Little Wing": 19.7,
+        "Texas Flood": 20.5,
+        "Slow Dancing": 11.3,
+        "Plexi Crunch": 2.8,
+        "Back in Black": 1.6,
+        "Purple Haze": -3.4,
+        "Comfortably Numb": -2.0,
+        "Smells Like Teen Spirit": 14.0,
+        "Master of Puppets": -2.3,
+        "Enter Sandman": -3.0,
+        "Killing in the Name": -0.7,
+        "Seven Nation Army": 8.9,
+        "Streets Have No Name": 22.0,
+        "Everlong": -2.3,
+        "Only Shallow": 0.7,
+        "Ambient Swell": 19.1,
+        "Djent Tight": -1.3,
+        "Funk Clean": 23.7,
+        "Garage Rock": 1.3,
+        "Ain't Talkin' 'Bout Love": -0.7,
+        "Whole Lotta Love": -2.5,
+        "Modern Lead": -2.7,
+        "Enter Sandman IR": -6.9,
+        "Enter Sandman IR · EQ": -6.5,
+        "Modern Metal IR": -8.3,
+        "Djent IR": -2.6,
+        "Swedish Chainsaw IR": -6.5,
+        "Doom Wall IR": -9.1,
+        "AC/DC · Back in Black IR": -4.1,
+        "AC/DC · Thunderstruck IR": -0.5,
+        "Metallica · Master of Puppets IR": -6.0,
+        "Metallica · Sad But True IR": -2.7,
+        "Linkin Park · One Step Closer IR": -7.6,
+        "Linkin Park · Faint IR": -7.8,
+        "Pantera · Walk IR": -5.4,
+        "Pantera · Cowboys from Hell IR": -8.0
     ]
 
     /// Applies the calibration table to the factory catalogue.

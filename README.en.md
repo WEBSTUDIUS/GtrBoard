@@ -7,17 +7,17 @@
 **A guitar board for macOS — no plugin, no DAW, no waiting around.**
 
 Low-latency standalone chain: guitar → 15 pedals → amp → cabinet → IR cabinet →
-10-band EQ → recording. 30 factory rigs, user presets in open JSON, A/B banks, click-free
+10-band EQ → recording. 38 factory rigs, user presets in open JSON, A/B banks, click-free
 preset crossfades and a menu-bar controller.
 
 <p><b>English</b> · <a href="README.md">🇷🇺 Русский</a></p>
 
 [![macOS](https://img.shields.io/badge/macOS-14%2B-black?logo=apple&logoColor=white)](#build)
 [![Swift](https://img.shields.io/badge/Swift-6-F05138?logo=swift&logoColor=white)](#build)
-[![Tests](https://img.shields.io/badge/tests-906%20passing-2ea043)](#tests)
+[![Tests](https://img.shields.io/badge/tests-1083%20passing-2ea043)](#tests)
 [![CI](https://github.com/WEBSTUDIUS/GtrBoard/actions/workflows/ci.yml/badge.svg)](https://github.com/WEBSTUDIUS/GtrBoard/actions/workflows/ci.yml)
 [![License](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
-[![Version](https://img.shields.io/badge/version-0.4.0-8b5cf6)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-0.5.0-8b5cf6)](CHANGELOG.md)
 
 [Quick start](#quickstart) · [AI presets](#ai-presets) · [Recording](#record) ·
 [Build](#build) · [Architecture](#architecture)
@@ -80,7 +80,7 @@ to play.
 - **Modulation and time.** Chorus, Flanger, Phaser, Tremolo, Delay (digital /
   analog / ping-pong), Reverb (room / hall / plate).
 - **10-band graphic EQ** at 31.5 Hz – 16 kHz, ±12 dB, at the end of the chain.
-- **Presets.** 30 factory rigs, user presets, search, JSON import/export, A/B
+- **Presets.** 38 factory rigs, user presets, search, JSON import/export, A/B
   banks and space-bar switching.
 - **Crossfade.** Two independent chains: the new preset is mixed in over 50 ms
   with no click, silence gap or level jump.
@@ -93,7 +93,7 @@ to play.
 
 ### 1. Build the app
 
-> **Prebuilt:** [GtrBoard 0.4.0 for macOS (Apple Silicon), zip](https://github.com/WEBSTUDIUS/GtrBoard/releases/latest).
+> **Prebuilt:** [GtrBoard 0.5.0 for macOS (Apple Silicon), zip](https://github.com/WEBSTUDIUS/GtrBoard/releases/latest).
 > Unzip the `.app` and open it. The build is ad-hoc signed; if Gatekeeper
 > complains, right-click → **Open**.
 
@@ -112,7 +112,7 @@ Other commands:
 ```bash
 ./run.sh       # build and open
 ./install.sh   # install to /Applications (~/Applications fallback)
-./test.sh      # DSP/preset self-tests (906 checks)
+./test.sh      # DSP/preset self-tests (1083 checks)
 ```
 
 ### 2. Plug in a guitar
@@ -241,7 +241,7 @@ pedals, EQ, master volume, output trim, limiter, feedback guard and bypass.
 ### Factory rigs
 
 <details>
-<summary><b>30 factory presets — expand</b></summary>
+<summary><b>38 factory presets — expand</b></summary>
 
 | Preset | Reference | Tags |
 |---|---|---|
@@ -275,6 +275,14 @@ pedals, EQ, master volume, output trim, limiter, feedback guard and bypass.
 | Djent IR | tight boost → 5150-style head → Djent IR | metal, djent, ir |
 | Swedish Chainsaw IR | hard clip → high gain → Fredman 57/57 IR | metal, death, ir |
 | Doom Wall IR | Big Muff → dark amp → Orange PPC IR | metal, doom, ir |
+| AC/DC · Back in Black IR | British crunch → 1960 V30 IR | classic-rock, rhythm, ir |
+| AC/DC · Thunderstruck IR | Bright British crunch → 1960 G12T-75 IR | classic-rock, rhythm, ir |
+| Metallica · Master of Puppets IR | Tight boost → high gain → Mesa OS SM57 IR | thrash, rhythm, ir |
+| Metallica · Sad But True IR | High gain → V30 57+121 IR | metal, rhythm, ir |
+| Linkin Park · One Step Closer IR | Tight boost → high gain → Mesa OS SM57 IR | nu-metal, rhythm, ir |
+| Linkin Park · Faint IR | Tight boost → high gain → V30 SM57 IR | nu-metal, rhythm, ir |
+| Pantera · Walk IR | Hard clip → amp → 1960 G12T-75 IR | groove-metal, rhythm, ir |
+| Pantera · Cowboys from Hell IR | Hard clip → amp → 1960 V30 IR | groove-metal, rhythm, ir |
 
 </details>
 
@@ -538,7 +546,7 @@ Sources/
   BoardCore/              # no Core Audio/AppKit: DSP, models, presets
     DSP/                  # effect nodes, oversampler, reverb, limiter
     BoardSettings.swift   # complete board snapshot
-    BuiltInPresets.swift  # 30 factory rigs
+    BuiltInPresets.swift  # 38 factory rigs
   GtrBoard/
     Audio/                # HAL, aggregate device, render callback, recorder
     UI/                   # SwiftUI: pedalboard, EQ, presets, footer
@@ -565,7 +573,7 @@ crossfaded in over 50 ms while the current chain keeps playing and fades out.
 Covered:
 
 - effect catalogue and parameter normalisation;
-- serialisation of all 30 factory presets and tolerant decoding;
+- serialisation of all 38 factory presets and tolerant decoding;
 - preset store write/read/export/import;
 - biquad and graphic-EQ frequency response;
 - rendering every factory rig: finite, no clipping, signal present;
@@ -580,7 +588,7 @@ Covered:
 - throughput: a full high-gain board renders ~75× faster than real time on
   Apple Silicon.
 
-Current run: **906 checks**, all passing. GitHub Actions runs the same suite on
+Current run: **1083 checks**, all passing. GitHub Actions runs the same suite on
 every push and pull request and uploads the built `.app` as an artifact.
 
 ## <a id="trouble"></a>Troubleshooting
